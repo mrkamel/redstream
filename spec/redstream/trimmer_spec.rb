@@ -5,7 +5,7 @@ RSpec.describe Redstream::Trimmer do
   it "should delete expired messages" do
     redis.xadd Redstream.stream_key_name("default"), "*", "payload", JSON.dump(value: "message")
 
-    Redstream::Trimmer.new(expiry: 0, stream_name: "default", value: "value").run_once
+    Redstream::Trimmer.new(expiry: 0, stream_name: "default").run_once
 
     expect(redis.xlen(Redstream.stream_key_name("default"))).to eq(0)
   end
@@ -13,7 +13,7 @@ RSpec.describe Redstream::Trimmer do
   it "shouldn't delete not yet expired messages" do
     redis.xadd Redstream.stream_key_name("default"), "*", "payload", JSON.dump(value: "message")
 
-    trimmer = Redstream::Trimmer.new(expiry: 2, stream_name: "default", value: "value")
+    trimmer = Redstream::Trimmer.new(expiry: 2, stream_name: "default")
 
     thread = Thread.new do
       trimmer.run_once

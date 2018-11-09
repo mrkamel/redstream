@@ -1,13 +1,13 @@
 
 module Redstream
   class Delayer
-    def initialize(redis: Redis.new, stream_name:, delay:, value:, logger: Logger.new("/dev/null"))
+    def initialize(redis: Redis.new, stream_name:, delay:, logger: Logger.new("/dev/null"))
       @redis = redis
       @stream_name = stream_name
       @delay = delay
       @logger = logger
 
-      @consumer = Consumer.new(redis: redis.dup, stream_name: "#{stream_name}-delay", value: value, logger: logger)
+      @consumer = Consumer.new(redis: redis.dup, stream_name: "#{stream_name}-delay", logger: logger)
       @batch = []
     end
 

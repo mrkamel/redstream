@@ -1,10 +1,12 @@
 
+require "securerandom"
+
 module Redstream
   class Lock
-    def initialize(redis: Redis.new, name:, value:)
+    def initialize(redis: Redis.new, name:)
       @redis = redis
       @name = name
-      @value = value
+      @id = SecureRandom.hex
     end
 
     def acquire(&block)
@@ -36,15 +38,15 @@ module Redstream
 
     def get_lock
       @get_lock_script =<<-EOF
-        local lock_key_name, value = ARGV[1], ARGV[2]
+        local lock_key_name, id = ARGV[1], ARGV[2]
 
         local cur = redis.call('get', lock_key_name)
 
         if not cur then
-          redis.call('setex', lock_key_name, 5, value)
+          redis.call('setex', lock_key_name, 5, id)
 
           return true
-        elseif cur == value then
+        elseif cur == id then
           redis.call('expire', lock_key_name, 5)
 
           return true
@@ -53,7 +55,7 @@ module Redstream
         return false
       EOF
 
-      @redis.eval(@get_lock_script, argv: [Redstream.lock_key_name(@name), @value])
+      @redis.eval(@get_lock_script, argv: [Redstream.lock_key_name(@name), @id])
     end
   end
 end

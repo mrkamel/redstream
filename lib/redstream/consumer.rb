@@ -3,12 +3,11 @@ require "thread"
 
 module Redstream
   class Consumer
-    def initialize(redis: Redis.new, stream_name:, value:, batch_size: 1_000, logger: Logger.new("/dev/null"))
+    def initialize(redis: Redis.new, stream_name:, batch_size: 1_000, logger: Logger.new("/dev/null"))
       @redis = redis
-      @lock = Lock.new(redis: redis.dup, name: stream_name, value: value)
+      @lock = Lock.new(redis: redis.dup, name: stream_name)
       @stream_name = stream_name
       @batch_size = batch_size
-      @value = value
       @logger = logger
     end
 
@@ -49,49 +48,6 @@ module Redstream
 
     def commit(offset)
       @redis.set Redstream.offset_key_name(@stream_name), offset
-    end
-
-    private
-
-    def keep_lock
-      stop = false
-      mutex = Mutex.new
-
-      Thread.new do
-        until mutex.synchronize { stop }
-          @lock_redis.expire(Redstream.lock_key_name(@stream_name), 5)
-
-          sleep 3
-        end
-      end
-
-      yield
-    ensure
-      mutex.synchronize do
-        stop = true
-      end
-    end
-
-    def acquire_lock
-      @acquire_lock_script =<<-EOF
-        local lock_key_name, value = ARGV[1], ARGV[2]
-
-        local cur = redis.call('get', lock_key_name)
-
-        if not cur then
-          redis.call('setex', lock_key_name, 5, value)
-
-          return true
-        elseif cur == value then
-          redis.call('expire', lock_key_name, 5)
-
-          return true
-        end
-
-        return false
-      EOF
-
-      return @redis.eval(@acquire_lock_script, argv: [Redstream.lock_key_name(@stream_name), @value])
     end
   end
 end

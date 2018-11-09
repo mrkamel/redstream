@@ -4,11 +4,11 @@ require File.expand_path("../spec_helper", __dir__)
 RSpec.describe Redstream::Lock do
   it "should get a lock" do
     lock_results = Concurrent::Array.new
-    calls = Concurrent::AtomicFixnum.new
+    calls = Concurrent::AtomicFixnum.new(0)
 
     threads = Array.new(2) do |i|
       Thread.new do
-        lock_results << Redstream::Lock.new(name: "lock", value: "thread-#{i}").acquire do
+        lock_results << Redstream::Lock.new(name: "lock").acquire do
           calls.increment
 
           sleep 1
@@ -27,7 +27,7 @@ RSpec.describe Redstream::Lock do
     calls = Concurrent::Array.new
 
     threads << Thread.new do
-      Redstream::Lock.new(name: "lock", value: "thread-1").acquire do
+      Redstream::Lock.new(name: "lock").acquire do
         calls << "thread-1"
 
         sleep 6
@@ -37,7 +37,7 @@ RSpec.describe Redstream::Lock do
     sleep 6
 
     threads << Thread.new do
-      Redstream::Lock.new(name: "lock", value: "thread-2").acquire do
+      Redstream::Lock.new(name: "lock").acquire do
         calls << "thread-2"
       end
     end
@@ -48,7 +48,7 @@ RSpec.describe Redstream::Lock do
   end
 
   it "shouldn't lock itself" do
-    lock = Redstream::Lock.new(name: "lock", value: "value")
+    lock = Redstream::Lock.new(name: "lock")
 
     lock_results = []
     calls = 0

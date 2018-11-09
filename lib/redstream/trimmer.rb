@@ -1,12 +1,12 @@
 
 module Redstream
   class Trimmer
-    def initialize(redis: Redis.new, expiry:, stream_name:, value:, logger: Logger.new("/dev/null"))
+    def initialize(redis: Redis.new, expiry:, stream_name:, logger: Logger.new("/dev/null"))
       @redis = redis
       @expiry = expiry
       @stream_name = stream_name
       @logger = logger
-      @lock = Lock.new(redis: redis.dup, name: "#{stream_name}-trimmer", value: value)
+      @lock = Lock.new(redis: redis.dup, name: "#{stream_name}-trimmer")
     end
 
     def run
