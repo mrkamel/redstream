@@ -18,16 +18,16 @@ module Redstream
     def run_once
       @consumer.run_once do |messages|
         messages.each do |message|
-          diff = (message.id.to_f / 1_000) + @delay - Time.now.utc.to_f
+          seconds_to_sleep = message.id.to_f / 1_000 + @delay.to_f - Time.now.to_f
 
-          if diff > 0
+          if seconds_to_sleep > 0
             if @batch.size > 0
               deliver
 
               @consumer.commit @batch.last.id
             end
 
-            sleep(diff + 5)
+            sleep(seconds_to_sleep + 1)
           end
 
           @batch << message
@@ -49,6 +49,8 @@ module Redstream
           @redis.xadd Redstream.stream_key_name(@stream_name), "*", "payload", message["payload"]
         end
       end
+
+      @redis.xdel Redstream.stream_key_name("#{@stream_name}-delay"), @batch.map(&:id)
 
       @batch = []
     end

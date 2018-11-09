@@ -7,7 +7,7 @@ RSpec.describe Redstream::Delayer do
 
     expect(redis.xlen(Redstream.stream_key_name("target"))).to eq(0)
 
-    Redstream::Delayer.new(stream_name: "target", delay: 0, value: "localhost").run_once
+    Redstream::Delayer.new(stream_name: "target", delay: 0, value: "value").run_once
 
     expect(redis.xlen(Redstream.stream_key_name("target"))).to eq(1)
     expect(redis.xrange(Redstream.stream_key_name("target"), "-", "+").last[1]).to eq(["payload", JSON.dump(value: "message")])
@@ -17,7 +17,7 @@ RSpec.describe Redstream::Delayer do
     redis.xadd Redstream.stream_key_name("target-delay"), "*", "payload", JSON.dump(value: "message")
 
     thread = Thread.new do
-      Redstream::Delayer.new(stream_name: "target", delay: 2, value: "localhost").run_once
+      Redstream::Delayer.new(stream_name: "target", delay: 2, value: "value").run_once
     end
 
     sleep 1

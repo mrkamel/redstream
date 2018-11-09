@@ -2,8 +2,10 @@
 require "redis"
 require "json"
 require "thread"
+require "set"
 
 require "redstream/version"
+require "redstream/lock"
 require "redstream/message"
 require "redstream/consumer"
 require "redstream/producer"

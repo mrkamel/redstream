@@ -5,7 +5,7 @@ module Redstream
   class Consumer
     def initialize(redis: Redis.new, stream_name:, value:, batch_size: 1_000, logger: Logger.new("/dev/null"))
       @redis = redis
-      @lock_redis = redis.dup
+      @lock = Lock.new(redis: redis.dup, name: stream_name, value: value)
       @stream_name = stream_name
       @batch_size = batch_size
       @value = value
@@ -17,13 +17,7 @@ module Redstream
     end
 
     def run_once(&block)
-      unless acquire_lock
-        sleep 5
-
-        return
-      end
-
-      keep_lock do
+      got_lock = @lock.acquire do
         offset = @redis.get(Redstream.offset_key_name(@stream_name))
         offset ||= "0-0"
 
@@ -43,6 +37,8 @@ module Redstream
 
         commit offset
       end
+
+      sleep(5) unless got_lock
     rescue => e
       @logger.error e
 
