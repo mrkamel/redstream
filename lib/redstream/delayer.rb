@@ -22,9 +22,11 @@ module Redstream
 
           if seconds_to_sleep > 0
             if @batch.size > 0
+              id = @batch.last.id
+
               deliver
 
-              @consumer.commit @batch.last.id
+              @consumer.commit id
             end
 
             sleep(seconds_to_sleep + 1)
