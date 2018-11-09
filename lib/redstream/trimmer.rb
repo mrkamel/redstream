@@ -1,10 +1,10 @@
 
 module Redstream
   class Trimmer
-    def initialize(redis: Redis.new, expiry:, stream_names:, logger: Logger.new("/dev/null"))
+    def initialize(redis: Redis.new, expiry:, stream_name:, logger: Logger.new("/dev/null"))
       @redis = redis
       @expiry = expiry
-      @stream_names = stream_names
+      @stream_name = stream_name
       @logger = logger
     end
 
@@ -17,23 +17,13 @@ module Redstream
     end
 
     def run_once
-      @stream_names.each do |stream_name|
-        trim stream_name
-      end
-    end
+      messages = @redis.xrange(Redstream.stream_key_name(@stream_name), "-", (Time.now.to_f * 1000).to_i - @expiry, "COUNT", 1_000)
 
-    private
+      return if messages.nil? || messages.empty?
 
-    def trim(stream_name)
-      loop do
-        messages = @redis.xrange(Redstream.stream_key_name(stream_name), "-", (Time.now.to_f * 1000).to_i - @expiry, "COUNT", 1_000)
+      @redis.xdel Redstream.stream_key_name(@stream_name), messages.map(&:first)
 
-        return if messages.nil? || messages.empty?
-
-        @redis.xdel Redstream.stream_key_name(stream_name), messages.map(&:first)
-
-        @logger.debug "Trimmed #{messages.size} messages from #{stream_name}"
-      end
+      @logger.debug "Trimmed #{messages.size} messages from #{@stream_name}"
     end
   end
 end

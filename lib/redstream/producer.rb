@@ -22,7 +22,7 @@ module Redstream
       enumerable(scope).each_slice(250) do |slice|
         @redis.pipelined do
           slice.map do |object|
-            @redis.xadd Redstream.stream_key_name("delay"), "*", "payload", JSON.dump(object.redstream_payload), "stream_name", stream_name(object)
+            @redis.xadd Redstream.stream_key_name("#{stream_name(object)}-delay"), "*", "payload", JSON.dump(object.redstream_payload)
           end
         end
       end
@@ -49,7 +49,7 @@ module Redstream
     end
 
     def delay(object)
-      @redis.xadd Redstream.stream_key_name("delay"), "*", "payload", JSON.dump(object.redstream_payload), "stream_name", stream_name(object)
+      @redis.xadd Redstream.stream_key_name("#{stream_name(object)}-delay"), "*", "payload", JSON.dump(object.redstream_payload)
 
       true
     end

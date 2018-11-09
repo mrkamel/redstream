@@ -53,7 +53,7 @@ RSpec.describe Redstream::Consumer do
     end
 
     expect(messages.size).to eq(1)
-    expect(messages[0].payload).to eq(JSON.parse(array_to_hash(all_messages[1][1])["payload"]))
+    expect(messages[0].raw_message).to eq(all_messages[1])
   end
 
   it "should yield messages in batches" do

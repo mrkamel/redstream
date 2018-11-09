@@ -3,25 +3,6 @@ require "thread"
 
 module Redstream
   class Consumer
-    class WrappedMessage
-      def initialize(id, message)
-        @id = id
-        @message = message
-      end
-
-      def id
-        @id
-      end
-
-      def payload
-        @payload ||= JSON.parse(@message["payload"])
-      end
-
-      def [](key)
-        @message[key]
-      end
-    end
-
     def initialize(redis: Redis.new, stream_name:, value:, batch_size: 1_000, logger: Logger.new("/dev/null"))
       @redis = redis
       @lock_redis = redis.dup
@@ -50,8 +31,8 @@ module Redstream
 
         return unless response
 
-        messages = response[0][1].map do |id, message|
-          WrappedMessage.new(id, Hash[message.each_slice(2).to_a])
+        messages = response[0][1].map do |raw_message|
+          Message.new(raw_message)
         end
 
         block.call(messages)

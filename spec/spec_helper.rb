@@ -35,10 +35,6 @@ module SpecHelper
   def redis
     @redis ||= Redis.new
   end
-
-  def array_to_hash(array)
-    Hash[array.each_slice(2).to_a]
-  end
 end
 
 RSpec.configure do |config|

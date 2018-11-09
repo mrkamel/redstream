@@ -1,12 +1,13 @@
 
 module Redstream
   class Delayer
-    def initialize(redis: Redis.new, delay:, value:, logger: Logger.new("/dev/null"))
+    def initialize(redis: Redis.new, stream_name:, delay:, value:, logger: Logger.new("/dev/null"))
       @redis = redis
+      @stream_name = stream_name
       @delay = delay
       @logger = logger
 
-      @consumer = Consumer.new(redis: redis.dup, stream_name: "delay", value: value, logger: logger)
+      @consumer = Consumer.new(redis: redis.dup, stream_name: "#{stream_name}-delay", value: value, logger: logger)
       @batch = []
     end
 
@@ -45,7 +46,7 @@ module Redstream
 
       @redis.pipelined do
         @batch.each do |message|
-          @redis.xadd Redstream.stream_key_name(message["stream_name"]), "*", "payload", message["payload"]
+          @redis.xadd Redstream.stream_key_name(@stream_name), "*", "payload", message["payload"]
         end
       end
 
