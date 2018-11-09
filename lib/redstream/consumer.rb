@@ -20,7 +20,11 @@ module Redstream
         offset = @redis.get(Redstream.offset_key_name(@stream_name))
         offset ||= "0-0"
 
-        response = @redis.xread("COUNT", @batch_size, "BLOCK", 5_000, "STREAMS", Redstream.stream_key_name(@stream_name), offset)
+        response = begin
+          @redis.xread("COUNT", @batch_size, "BLOCK", 5_000, "STREAMS", Redstream.stream_key_name(@stream_name), offset)
+        rescue Redis::TimeoutError
+          nil
+        end
 
         return unless response
 
