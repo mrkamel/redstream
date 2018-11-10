@@ -118,11 +118,11 @@ delay stream, after it moved/copied them, so why not simply delete the messages
 after they have been consumed and successfully processed by a `Consumer`? Well,
 this will probably be added in the future, but please note that you should have
 only one `Delayer` and only one `Trimmer` per stream. However, you can have as
-many `Consumer` instances as you like. Actually, if you need to replicate
-updates into more than one other secondary datastore, you will have to use
+many `Consumer` instances per stream as you like. Actually, if you need to
+replicate updates into more than one secondary datastore, you will have to use
 multiple `Consumer` instances per stream. Moreover, to name another use case,
 elasticsearch requires to denormalize data and you can e.g. use a second
-`Consumer` to cascade updates to dependent indices with denormalized data.
+`Consumer` to cascade updates to dependent indices stroring denormalized data.
 
 A `Producer` adds messages to the concrete redis streams, and you
 can actually pass a concrete `Producer` instance via `redstream_callbacks`:
