@@ -3,12 +3,13 @@ require "thread"
 
 module Redstream
   class Consumer
-    def initialize(redis: Redis.new, stream_name:, batch_size: 1_000, logger: Logger.new("/dev/null"))
+    def initialize(redis: Redis.new, name:, stream_name:, batch_size: 1_000, logger: Logger.new("/dev/null"))
       @redis = redis
-      @lock = Lock.new(redis: redis.dup, name: stream_name)
+      @name = name
       @stream_name = stream_name
       @batch_size = batch_size
       @logger = logger
+      @lock = Lock.new(redis: redis.dup, name: name)
     end
 
     def run(&block)

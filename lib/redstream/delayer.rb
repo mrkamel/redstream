@@ -7,7 +7,7 @@ module Redstream
       @delay = delay
       @logger = logger
 
-      @consumer = Consumer.new(redis: redis.dup, stream_name: "#{stream_name}-delay", logger: logger)
+      @consumer = Consumer.new(redis: redis.dup, name: "#{stream_name}-delayer", stream_name: "#{stream_name}-delay", logger: logger)
       @batch = []
     end
 
