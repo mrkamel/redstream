@@ -42,14 +42,14 @@ module Redstream
       true
     end
 
-    def queue(object)
-      @redis.xadd Redstream.stream_key_name(stream_name(object)), "*", "payload", JSON.dump(object.redstream_payload)
+    def delay(object)
+      @redis.xadd Redstream.stream_key_name("#{stream_name(object)}-delay"), "*", "payload", JSON.dump(object.redstream_payload)
 
       true
     end
 
-    def delay(object)
-      @redis.xadd Redstream.stream_key_name("#{stream_name(object)}-delay"), "*", "payload", JSON.dump(object.redstream_payload)
+    def queue(object)
+      @redis.xadd Redstream.stream_key_name(stream_name(object)), "*", "payload", JSON.dump(object.redstream_payload)
 
       true
     end
