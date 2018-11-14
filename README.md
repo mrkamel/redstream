@@ -23,7 +23,7 @@ Or install it yourself as:
 ## Usage
 
 Include `Redstream::Model` in your model and add a call to
-`readstream_callbacks`.
+`redstream_callbacks`.
 
 ```ruby
 class MyModel < ActiveRecord::Base
@@ -71,15 +71,17 @@ end
 ```
 
 More concretely, `after_save`, `after_touch` and `after_destroy` only write
-"delay" messages to a special purpose redis stream. Only `after_commit` writes
-messages to a redis stream for updating secondary datastores immediately. The
-reasoning is simple: usually, i.e. by using only one way to update secondary
-datastores, namely `after_save` or `after_commit`, any errors occurring in
-between `after_save` and `after_commit` result in inconsistencies between your
-primary and secondary datastore. By using these kinds of "delay" messages
-triggered by `after_save` and fetched after e.g. 5 minutes, errors occurring in
-between `after_save` and `after_commit` can be fixed when the delay message get
-processed.
+"delay" messages to an additional redis stream. Delay message are exactly like
+any other messages, but are processed by a Redstream::Delayer only after a some
+(configurable) delay/time has passed to fix inconsistencies. Only
+`after_commit` writes messages to a redis stream for updating secondary
+datastores immediately. The reasoning is simple: usually, i.e. by using only
+one way to update secondary datastores, namely `after_save` or `after_commit`,
+any errors occurring in between `after_save` and `after_commit` result in
+inconsistencies between your primary and secondary datastore. By using these
+kinds of "delay" messages triggered by `after_save` and fetched after e.g. 5
+minutes, errors occurring in between `after_save` and `after_commit` can be
+fixed when the delay message get processed.
 
 Any messages are fetched in batches, such that e.g. elasticsearch can be
 updated using its bulk API. For instance, depending on which elasticsearch ruby
@@ -161,5 +163,6 @@ record to the main stream after `update_all` is called - just like it is done
 within the model lifecycle callbacks.
 
 # Stream Offsets
+# Connection Pooling
 # Locks and Failover
 

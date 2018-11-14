@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "timecop"
   spec.add_development_dependency "concurrent-ruby"
 
+  spec.add_dependency "connection_pool"
   spec.add_dependency "redis"
   spec.add_dependency "json"
 end

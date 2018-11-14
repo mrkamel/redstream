@@ -2,9 +2,27 @@
 require "securerandom"
 
 module Redstream
+  # @api private
+  #
+  # As the name suggests, the Redstream::Lock class implements a redis based
+  # locking mechanism. It atomically (lua script) gets/sets the lock key and
+  # updates its expire timeout, in case it currently holds the lock. Moreover,
+  # once it got the lock, it tries to keep it by updating the lock expire
+  # timeout from within a thread every 3 seconds.
+  #
+  # @example
+  #   lock = Redstream::Lock.new(name: "user_stream_lock")
+  #
+  #   loop do
+  #     got_lock = lock.acquire do
+  #       # ...
+  #     end
+  #
+  #     sleep(5) unless got_lock
+  #   end
+
   class Lock
-    def initialize(redis: Redis.new, name:)
-      @redis = redis
+    def initialize(name:)
       @name = name
       @id = SecureRandom.hex
     end
@@ -23,7 +41,7 @@ module Redstream
 
       Thread.new do
         until mutex.synchronize { stop }
-          @redis.expire(Redstream.lock_key_name(@name), 5)
+          Redstream.connection_pool.with { |redis| redis.expire(Redstream.lock_key_name(@name), 5) }
 
           sleep 3
         end
@@ -55,7 +73,7 @@ module Redstream
         return false
       EOF
 
-      @redis.eval(@get_lock_script, argv: [Redstream.lock_key_name(@name), @id])
+      Redstream.connection_pool.with { |redis| redis.eval(@get_lock_script, argv: [Redstream.lock_key_name(@name), @id]) }
     end
   end
 end
