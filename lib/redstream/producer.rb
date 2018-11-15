@@ -7,16 +7,16 @@ module Redstream
   # However, Redstream::Model is not able to recognize model updates resulting
   # from model updates via e.g. #update_all, #delete_all, etc, i.e. updates
   # which by-pass model callbacks. Thus, calls to e.g. #update_all must be
-  # wrapped with Redstream::Producer#bulk (see example), to write these updates
-  # to the redis streams as well.
+  # wrapped with `find_in_batches` and Redstream::Producer#bulk (see example),
+  # to write these updates to the redis streams as well.
   #
   # @example
   #   producer = Redstream::Producer.new
   #
-  #   confirmed_users = User.where(confirmed: true)
-  #
-  #   producer.bulk confirmed_users do
-  #     confirmed_users.update_all(send_mailing: true)
+  #   User.where(confirmed: true).find_in_batches do |users|
+  #     producer.bulk users do
+  #       User.where(id: users.map(&:id)).update_all(send_mailing: true)
+  #     end
   #   end
 
   class Producer

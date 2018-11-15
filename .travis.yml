@@ -1,0 +1,10 @@
+sudo: false
+language: ruby
+rvm:
+  - ruby-head
+before_install:
+  - docker-compose up -d
+  - sleep 10
+install:
+  - travis_retry bundle install
+script: rspec

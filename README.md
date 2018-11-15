@@ -1,8 +1,10 @@
 
 # Redstream
 
-Using redis streams to keep your primary database in sync with secondary
-datastores (e.g. elasticsearch).
+**Using redis streams to keep your primary database in sync with secondary
+datastores (e.g. elasticsearch).**
+
+[![Build Status](https://secure.travis-ci.org/mrkamel/redstream.png?branch=master)](http://travis-ci.org/mrkamel/redstream)
 
 ## Installation
 
@@ -19,6 +21,11 @@ And then execute:
 Or install it yourself as:
 
     $ gem install redstream
+
+## Reference Docs
+
+The reference docs can be found at
+[https://www.rubydoc.info/github/mrkamel/redstream/master](https://www.rubydoc.info/github/mrkamel/redstream/master).
 
 ## Usage
 
@@ -72,7 +79,7 @@ end
 
 More concretely, `after_save`, `after_touch` and `after_destroy` only write
 "delay" messages to an additional redis stream. Delay message are exactly like
-any other messages, but are processed by a Redstream::Delayer only after a some
+any other messages, but are processed by a `Redstream::Delayer` only after a some
 (configurable) delay/time has passed to fix inconsistencies. Only
 `after_commit` writes messages to a redis stream for updating secondary
 datastores immediately. The reasoning is simple: usually, i.e. by using only
@@ -149,18 +156,57 @@ the case for `#update_all`:
 Product.where(on_stock: true).update_all(featured: true)
 ```
 
-To capture those updates as well, you need to wrap this into:
+To capture those updates as well, you need to change:
 
 ```ruby
-producer.bulk Product.where(on_stock: true) do
-  Product.where(on_stock: true).update_all(featured: true)
+Product.where(on_stock: true).update_all(featured: true)
+```
+
+to
+
+```ruby
+Product.where(on_stock: true).find_in_batches do |products|
+  producer.bulk products do
+    Product.where(id: products.map(&:id)).update_all(featured: true)
+  end
 end
 ```
 
 The `Producer` will write a message for every matched record into the delay
 stream before `update_all` is called and will write another message for every
 record to the main stream after `update_all` is called - just like it is done
-within the model lifecycle callbacks.
+within the model lifecycle callbacks. But why do you need to do it in batches?
+Imagine the following:
+
+```ruby
+Product.where(featured: true).where("price > 20").update_all(featured: false)
+```
+
+Now we naively pass the `ActiveRecord::Relation` to `Redstream::Producer#bulk`:
+
+```ruby
+  products = Product.where(featured: true).where("price > 20")
+
+  producer.bulk products do
+    products.update_all(featured: false)
+  end
+```
+
+which is equivalent to
+
+```ruby
+  products = Product.where(featured: true).where("price > 20")
+
+  producer.bulk_delay(products)
+  products.update_all(featured: false)
+  producer.bulk_queue(products)
+```
+
+Here, the matching records passed to `bulk_delay` will be different from the
+records passed to `bulk_queue` and `bulk_queue` won't recognize all records
+that have been changed. This would be fixed when the delay messages get
+processed, but still, the situation is undesirable and can be mitigated by
+looping over the batches via `find_in_batches` like shown above.
 
 # Stream Offsets
 # Connection Pooling
