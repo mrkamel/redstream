@@ -41,18 +41,30 @@ module Redstream
     @connection_pool ||= ConnectionPool.new(size: 20) { Redis.new }
   end
 
-  # Returns the maximum id of the specified stream, i.e. the id of the
+  # Returns the max id of the specified stream, i.e. the id of the
   # last/newest message added. Returns nil for empty streams.
   #
-  # @return [String, NilClass] The id of a stream's newest messages
+  # @param stream_name [String] The stream name
+  # @return [String, nil] The id of a stream's newest messages, or nil
 
-  def self.max_id(stream_name:)
+  def self.max_id(stream_name)
     @connection_pool.with do |redis|
       message = redis.xrevrange(stream_key_name(stream_name), "+", "-", "COUNT", 1)[0]
 
       return unless message
 
       message[0]
+    end
+  end
+
+  # Returns the max committed offset for the specified consumer name.
+  #
+  # @param consumer_name [String] the consumer name
+  # @return [String, nil] The max committed offset, or nil
+
+  def self.consumer_offset(consumer_name)
+    @connection_pool.with do |redis|
+      redis.get offset_key_name(consumer_name)
     end
   end
 
@@ -69,26 +81,25 @@ module Redstream
 
   # @api private
   #
-  # Generates the redis key name used for storing a stream's current offset,
+  # Generates the redis key name used for storing a consumer's current offset,
   # i.e. the maximum id successfully processed.
   #
-  # @param stream_name A high level stream name
+  # @param consumer_name A high level consumer name
   # @return [String] A redis key name for storing a stream's current offset
 
-  def self.offset_key_name(stream_name)
-    "redstream:offset:#{stream_name}"
+  def self.offset_key_name(consumer_name)
+    "redstream:offset:#{consumer_name}"
   end
 
   # @api private
   #
-  # Generates the redis key name used for locking with regards to the
-  # processing of a stream.
+  # Generates the redis key name used for locking.
   #
-  # @param stream_name A high level stream name
+  # @param name A high level name for the lock
   # @return [String] A redis key name used for locking
 
-  def self.lock_key_name(stream_name)
-    "redstream:lock:#{stream_name}"
+  def self.lock_key_name(name)
+    "redstream:lock:#{name}"
   end
 end
 

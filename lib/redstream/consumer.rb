@@ -56,7 +56,7 @@ module Redstream
 
     def run_once(&block)
       got_lock = @lock.acquire do
-        offset = Redstream.connection_pool.with { |redis| redis.get(Redstream.offset_key_name(@stream_name)) }
+        offset = Redstream.connection_pool.with { |redis| redis.get(Redstream.offset_key_name(@name)) }
         offset ||= "0-0"
 
         response = begin
@@ -99,7 +99,7 @@ module Redstream
     # @param offset [String] The offset/ID to commit
 
     def commit(offset)
-      Redstream.connection_pool.with { |redis| redis.set Redstream.offset_key_name(@stream_name), offset }
+      Redstream.connection_pool.with { |redis| redis.set Redstream.offset_key_name(@name), offset }
     end
   end
 end

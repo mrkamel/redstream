@@ -29,7 +29,7 @@ RSpec.describe Redstream::Consumer do
 
     expect(all_messages.size).to eq(2)
 
-    redis.set(Redstream.offset_key_name("products"), all_messages[0][0])
+    redis.set(Redstream.offset_key_name("product_consumer"), all_messages[0][0])
 
     messages = nil
 
@@ -66,13 +66,13 @@ RSpec.describe Redstream::Consumer do
   it "should update the offset" do
     create :product
 
-    expect(redis.get(Redstream.offset_key_name("products"))).to be(nil)
+    expect(redis.get(Redstream.offset_key_name("product_consumer"))).to be(nil)
 
     all_messages = redis.xrange(Redstream.stream_key_name("products"), "-", "+")
 
     Redstream::Consumer.new(name: "product_consumer", stream_name: "products").run_once {}
 
-    expect(redis.get(Redstream.offset_key_name("products"))).to eq(all_messages.last[0])
+    expect(redis.get(Redstream.offset_key_name("product_consumer"))).to eq(all_messages.last[0])
   end
 end
 
