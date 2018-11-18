@@ -1,0 +1,49 @@
+
+require File.expand_path("spec_helper", __dir__)
+
+RSpec.describe Redstream do
+  it "should allow seting the connection pool" do
+    begin
+      connection_pool = Redstream.connection_pool
+
+      Redstream.connection_pool = "pool"
+      expect(Redstream.connection_pool).to eq("pool")
+    ensure
+      Redstream.connection_pool = connection_pool
+    end
+  end
+
+  it "should allow getting the connection pool" do
+    begin
+      connection_pool = Redstream.connection_pool
+
+      Redstream.connection_pool = nil
+      expect(Redstream.connection_pool).to be_a(ConnectionPool)
+
+      Redstream.connection_pool = "pool"
+      expect(Redstream.connection_pool).to eq("pool")
+    ensure
+      Redstream.connection_pool = connection_pool
+    end
+  end
+
+  it "should return a stream's max id" do
+    id1 = redis.xadd("redstream:stream:products", "*", "key", "value")
+    id2 = redis.xadd("redstream:stream:products", "*", "key", "value")
+
+    expect(Redstream.max_id(stream_name: "products")).to eq(id2)
+  end
+
+  it "should generate a stream key name" do
+    expect(Redstream.stream_key_name("products")).to eq("redstream:stream:products")
+  end
+
+  it "should generate a offset key name" do
+    expect(Redstream.offset_key_name("products")).to eq("redstream:offset:products")
+  end
+
+  it "should generate a lock key name" do
+    expect(Redstream.lock_key_name("products")).to eq("redstream:lock:products")
+  end
+end
+

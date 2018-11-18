@@ -41,6 +41,21 @@ module Redstream
     @connection_pool ||= ConnectionPool.new(size: 20) { Redis.new }
   end
 
+  # Returns the maximum id of the specified stream, i.e. the id of the
+  # last/newest message added. Returns nil for empty streams.
+  #
+  # @return [String, NilClass] The id of a stream's newest messages
+
+  def self.max_id(stream_name:)
+    @connection_pool.with do |redis|
+      message = redis.xrevrange(stream_key_name(stream_name), "+", "-", "COUNT", 1)[0]
+
+      return unless message
+
+      message[0]
+    end
+  end
+
   # @api private
   #
   # Generates the low level redis stream key name.
