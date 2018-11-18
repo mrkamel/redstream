@@ -11,20 +11,17 @@ module Redstream
     # @param raw_message [Array] The raw message as returned by redis
 
     def initialize(raw_message)
-      @id = raw_message[0]
+      @message_id = raw_message[0]
       @raw_message = raw_message
-      @hash = Hash[raw_message[1].each_slice(2).to_a]
     end
 
     # Returns the message id, i.e. the redis message id consisting of a
     # timestamp plus sequence number.
     #
-    # TODO: rename to #offset to avoid mixing it up with the model's id
-    #
     # @returns [String] The message id
 
-    def id
-      @id
+    def message_id
+      @message_id
     end
 
     # Returns the parsed message payload as provided by the model's
@@ -32,19 +29,17 @@ module Redstream
     #
     # @return [Hash] The parsed payload
 
-    def json_payload
-      @json_payload ||= JSON.parse(@hash["payload"])
+    def payload
+      @payload ||= JSON.parse(fields["payload"])
     end
 
     # As a redis stream message allows to specify fields,
-    # this allows to retrieve the field content.
+    # this allows to retrieve the fields as a hash.
     #
-    # @param key [String] The field name
-    #
-    # @returns The field content
+    # @returns The fields hash
 
-    def [](key)
-      @hash[key]
+    def fields
+      @fields ||= Hash[@raw_message[1].each_slice(2).to_a]
     end
 
     # Returns the raw message content as returned by redis.
