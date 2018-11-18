@@ -1,4 +1,5 @@
 
+require "active_support/inflector"
 require "connection_pool"
 require "redis"
 require "json"
