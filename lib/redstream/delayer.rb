@@ -75,7 +75,7 @@ module Redstream
     def deliver
       return if @batch.size.zero?
 
-      @logger.debug "Delayed #{@batch.size} messages for #{@delay} seconds"
+      @logger.debug "Delayed #{@batch.size} messages for #{@delay.to_f} seconds on stream #{@stream_name}"
 
       Redstream.connection_pool.with do |redis|
         redis.pipelined do
