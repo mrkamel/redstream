@@ -98,7 +98,7 @@ similar to:
 ```ruby
 Thread.new do
   Redstream::Consumer.new(name: "product_indexer", stream_name: "products").run do |messages|
-    ids = messages.map { |message| message.json_payload["id"] }
+    ids = messages.map { |message| message.payload["id"] }
 
     ProductIndex.import Product.where(id: ids)
   end

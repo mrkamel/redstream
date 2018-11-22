@@ -49,7 +49,7 @@ module Redstream
   # @return [String, nil] The id of a stream's newest messages, or nil
 
   def self.max_stream_id(stream_name)
-    @connection_pool.with do |redis|
+    connection_pool.with do |redis|
       message = redis.xrevrange(stream_key_name(stream_name), "+", "-", "COUNT", 1)[0]
 
       return unless message
@@ -65,7 +65,7 @@ module Redstream
   # @return [String, nil] The max committed offset, or nil
 
   def self.max_consumer_id(consumer_name)
-    @connection_pool.with do |redis|
+    connection_pool.with do |redis|
       redis.get offset_key_name(consumer_name)
     end
   end
