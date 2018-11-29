@@ -37,16 +37,16 @@ RSpec.describe Redstream do
   end
 
   it "should return a consumer's max id" do
-    expect(Redstream.max_consumer_id("product_consumer")).to be_nil
+    expect(Redstream.max_consumer_id("products:consumer")).to be_nil
 
     id1 = redis.xadd("redstream:stream:products", "*", "key", "value")
     id2 = redis.xadd("redstream:stream:products", "*", "key", "value")
 
-    Redstream::Consumer.new(name: "product_consumer", stream_name: "products").run_once do |messages|
+    Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once do |messages|
       # nothing
     end
 
-    expect(Redstream.max_consumer_id("product_consumer")).to eq(id2)
+    expect(Redstream.max_consumer_id("products:consumer")).to eq(id2)
   end
 
   it "should generate a stream key name" do

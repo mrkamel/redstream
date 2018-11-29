@@ -53,17 +53,17 @@ In a background process, you need to run a `Redstream::Consumer`, `Redstream::De
 and a `Redstream::Trimmer`:
 
 ```ruby
-Redstream::Consumer.new(name: "product_consumer", stream_name: "products").run do |messages|
+Redstream::Consumer.new(stream_name: Product.redstream_name, name: "consumer").run do |messages|
   # Update seconday datastore
 end
 
 # ...
 
-Redstream::Delayer.new(stream_name: "products", delay: 5.minutes).run
+Redstream::Delayer.new(stream_name: Product.redstream_name, delay: 5.minutes).run
 
 # ...
 
-RedStream::Trimmer.new(stream_name: "products", expiry: 1.day).run
+RedStream::Trimmer.new(stream_name: Product.redstream_name, expiry: 1.day).run
 ```
 
 As all of them are blocking, you should run them in individual threads. But as
@@ -76,12 +76,6 @@ Thread.new do
   end
 end
 ```
-
-You should run a consumer per (stream_name, name) tuple on multiple hosts for
-high availability. They'll use a redis based locking mechanism to ensure that
-only one consumer is consuming messages per tuple while the others are
-hot-standbys, i.e. they'll take over in case the currently active instance
-dies. The same stands for delayers and trimmers.
 
 More concretely, `after_save`, `after_touch` and `after_destroy` only write
 "delay" messages to an additional redis stream. Delay message are exactly like
@@ -103,15 +97,35 @@ similar to:
 
 ```ruby
 Thread.new do
-  Redstream::Consumer.new(name: "product_indexer", stream_name: "products").run do |messages|
+  Redstream::Consumer.new(stream_name: Product.redstream_name, name: "indexer").run do |messages|
     ids = messages.map { |message| message.payload["id"] }
 
     ProductIndex.import Product.where(id: ids)
   end
 end
 
-Thread.new { Redstream::Delayer.new(stream_name: "products", delay: 5.minutes).run }
-Thread.new { RedStream::Trimmer.new(stream_name: "products", expiry: 1.day).run }
+Thread.new { Redstream::Delayer.new(stream_name: Product.redstream_name, delay: 5.minutes).run }
+Thread.new { RedStream::Trimmer.new(stream_name: Product.redstream_name, expiry: 1.day).run }
+```
+
+You should run a consumer per (stream_name, name) tuple on multiple hosts for
+high availability. They'll use a redis based locking mechanism to ensure that
+only one consumer is consuming messages per tuple while the others are
+hot-standbys, i.e. they'll take over in case the currently active instance
+dies. The same stands for delayers and trimmers.
+
+Please note: if you have multiple kinds of consumers for a single model/topic,
+then you must use distinct names. Assume you have an indexer, which updates a
+search index for a model and a cacher, which updates a cache store for a model:
+
+```ruby
+Redstream::Consumer.new(stream_name: Product.redstream_name, name: "indexer").run do |messages|
+  # ...
+end
+
+Redstream::Consumer.new(stream_name: Product.redstream_name, name: "cacher").run do |messages|
+  # ...
+end
 ```
 
 # Consumer, Delayer, Trimmer, Producer

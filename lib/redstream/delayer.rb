@@ -31,7 +31,7 @@ module Redstream
       @delay = delay
       @logger = logger
 
-      @consumer = Consumer.new(name: "#{stream_name}-delayer", stream_name: "#{stream_name}-delay", logger: logger)
+      @consumer = Consumer.new(name: "delayer", stream_name: "#{stream_name}.delay", logger: logger)
       @batch = []
     end
 
@@ -84,7 +84,7 @@ module Redstream
           end
         end
 
-        redis.xdel Redstream.stream_key_name("#{@stream_name}-delay"), @batch.map(&:message_id)
+        redis.xdel Redstream.stream_key_name("#{@stream_name}.delay"), @batch.map(&:message_id)
       end
 
       @batch = []

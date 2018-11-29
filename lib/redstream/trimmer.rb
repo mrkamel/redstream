@@ -27,7 +27,7 @@ module Redstream
       @expiry = expiry
       @stream_name = stream_name
       @logger = logger
-      @lock = Lock.new(name: "#{stream_name}-trimmer")
+      @lock = Lock.new(name: "trimmer:#{stream_name}")
     end
 
     # Loops and blocks forever trimming messages from the specified redis

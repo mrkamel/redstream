@@ -28,11 +28,12 @@ module Redstream
 
     def initialize(name:, stream_name:, batch_size: 1_000, logger: Logger.new("/dev/null"))
       @name = name
+      @full_name = "#{stream_name}:#{name}"
       @stream_name = stream_name
       @batch_size = batch_size
       @logger = logger
       @redis = Redstream.connection_pool.with(&:dup)
-      @lock = Lock.new(name: name)
+      @lock = Lock.new(name: @full_name)
     end
 
     # Loops and thus blocks forever while reading messages from the specified
@@ -57,7 +58,7 @@ module Redstream
 
     def run_once(&block)
       got_lock = @lock.acquire do
-        offset = @redis.get(Redstream.offset_key_name(@name))
+        offset = @redis.get(Redstream.offset_key_name(@full_name))
         offset ||= "0-0"
 
         response = begin
@@ -98,7 +99,7 @@ module Redstream
     # @param offset [String] The offset/ID to commit
 
     def commit(offset)
-      @redis.set Redstream.offset_key_name(@name), offset
+      @redis.set Redstream.offset_key_name(@full_name), offset
     end
   end
 end

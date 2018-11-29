@@ -70,7 +70,7 @@ module Redstream
         Redstream.connection_pool.with do |redis|
           redis.pipelined do
             slice.map do |object|
-              redis.xadd Redstream.stream_key_name("#{stream_name(object)}-delay"), "*", "payload", JSON.dump(object.redstream_payload)
+              redis.xadd Redstream.stream_key_name("#{stream_name(object)}.delay"), "*", "payload", JSON.dump(object.redstream_payload)
             end
           end
         end
@@ -112,7 +112,7 @@ module Redstream
 
     def delay(object)
       Redstream.connection_pool.with do |redis|
-        redis.xadd Redstream.stream_key_name("#{stream_name(object)}-delay"), "*", "payload", JSON.dump(object.redstream_payload)
+        redis.xadd Redstream.stream_key_name("#{stream_name(object)}.delay"), "*", "payload", JSON.dump(object.redstream_payload)
         redis.wait(@wait, 0) if @wait
       end
 

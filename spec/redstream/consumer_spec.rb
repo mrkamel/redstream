@@ -9,7 +9,7 @@ RSpec.describe Redstream::Consumer do
 
     threads = Array.new(2) do |i|
       Thread.new do
-        Redstream::Consumer.new(name: "product_consumer", stream_name: "products", batch_size: 5).run_once do |batch|
+        Redstream::Consumer.new(name: "consumer", stream_name: "products", batch_size: 5).run_once do |batch|
           calls.increment
 
           sleep 1
@@ -29,11 +29,11 @@ RSpec.describe Redstream::Consumer do
 
     expect(all_messages.size).to eq(2)
 
-    redis.set(Redstream.offset_key_name("product_consumer"), all_messages[0][0])
+    redis.set(Redstream.offset_key_name("products:consumer"), all_messages[0][0])
 
     messages = nil
 
-    consumer = Redstream::Consumer.new(name: "product_consumer", stream_name: "products")
+    consumer = Redstream::Consumer.new(name: "consumer", stream_name: "products")
 
     consumer.run_once do |batch|
       messages = batch
@@ -46,7 +46,7 @@ RSpec.describe Redstream::Consumer do
   it "should yield messages in batches" do
     products = create_list(:product, 15)
 
-    consumer = Redstream::Consumer.new(name: "product_consumer", stream_name: "products", batch_size: 10)
+    consumer = Redstream::Consumer.new(name: "consumer", stream_name: "products", batch_size: 10)
 
     messages = nil
 
@@ -66,13 +66,13 @@ RSpec.describe Redstream::Consumer do
   it "should update the offset" do
     create :product
 
-    expect(redis.get(Redstream.offset_key_name("product_consumer"))).to be(nil)
+    expect(redis.get(Redstream.offset_key_name("products:consumer"))).to be(nil)
 
     all_messages = redis.xrange(Redstream.stream_key_name("products"), "-", "+")
 
-    Redstream::Consumer.new(name: "product_consumer", stream_name: "products").run_once {}
+    Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once {}
 
-    expect(redis.get(Redstream.offset_key_name("product_consumer"))).to eq(all_messages.last[0])
+    expect(redis.get(Redstream.offset_key_name("products:consumer"))).to eq(all_messages.last[0])
   end
 end
 

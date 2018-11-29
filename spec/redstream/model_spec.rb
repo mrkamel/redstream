@@ -3,7 +3,7 @@ require File.expand_path("../spec_helper", __dir__)
 
 RSpec.describe Redstream::Model do
   it "should delay after save" do
-    expect(redis.xlen(Redstream.stream_key_name("products-delay"))).to eq(0)
+    expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(0)
 
     time = Time.now
 
@@ -11,12 +11,12 @@ RSpec.describe Redstream::Model do
       create(:product)
     end
 
-    expect(redis.xlen(Redstream.stream_key_name("products-delay"))).to eq(1)
-    expect(redis.xrange(Redstream.stream_key_name("products-delay"), "-", "+")[0][1]).to eq(["payload", JSON.dump(product.redstream_payload)])
+    expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(1)
+    expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+")[0][1]).to eq(["payload", JSON.dump(product.redstream_payload)])
   end
 
   it "should delay after touch" do
-    expect(redis.xlen(Redstream.stream_key_name("products-delay"))).to eq(0)
+    expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(0)
 
     product = create(:product)
 
@@ -26,12 +26,12 @@ RSpec.describe Redstream::Model do
       product.touch
     end
 
-    expect(redis.xlen(Redstream.stream_key_name("products-delay"))).to eq(2)
-    expect(redis.xrange(Redstream.stream_key_name("products-delay"), "-", "+")[1][1]).to eq(["payload", JSON.dump(product.redstream_payload)])
+    expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(2)
+    expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+")[1][1]).to eq(["payload", JSON.dump(product.redstream_payload)])
   end
 
   it "should delay after destroy" do
-    expect(redis.xlen(Redstream.stream_key_name("products-delay"))).to eq(0)
+    expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(0)
 
     product = create(:product)
 
@@ -41,8 +41,8 @@ RSpec.describe Redstream::Model do
       product.touch
     end
 
-    expect(redis.xlen(Redstream.stream_key_name("products-delay"))).to eq(2)
-    expect(redis.xrange(Redstream.stream_key_name("products-delay"), "-", "+")[1][1]).to eq(["payload", JSON.dump(product.redstream_payload)])
+    expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(2)
+    expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+")[1][1]).to eq(["payload", JSON.dump(product.redstream_payload)])
   end
 
   it "should queue after commit" do
