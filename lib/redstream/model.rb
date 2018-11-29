@@ -35,6 +35,10 @@ module Redstream
         after_destroy { |object| producer.delay object }
         after_commit { |object| producer.queue object }
       end 
+
+      def redstream_name
+        name.pluralize.underscore.tr("/", ":")
+      end
     end
 
     # Override to customize the message payload. By default, the payload

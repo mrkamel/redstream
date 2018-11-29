@@ -31,6 +31,7 @@ module Redstream
       @stream_name = stream_name
       @batch_size = batch_size
       @logger = logger
+      @redis = Redstream.connection_pool.with(&:dup)
       @lock = Lock.new(name: name)
     end
 
@@ -56,13 +57,11 @@ module Redstream
 
     def run_once(&block)
       got_lock = @lock.acquire do
-        offset = Redstream.connection_pool.with { |redis| redis.get(Redstream.offset_key_name(@name)) }
+        offset = @redis.get(Redstream.offset_key_name(@name))
         offset ||= "0-0"
 
         response = begin
-          Redstream.connection_pool.with do |redis|
-            redis.xread("COUNT", @batch_size, "BLOCK", 5_000, "STREAMS", Redstream.stream_key_name(@stream_name), offset)
-          end
+          @redis.xread("COUNT", @batch_size, "BLOCK", 5_000, "STREAMS", Redstream.stream_key_name(@stream_name), offset)
         rescue Redis::TimeoutError
           nil
         end
@@ -99,7 +98,7 @@ module Redstream
     # @param offset [String] The offset/ID to commit
 
     def commit(offset)
-      Redstream.connection_pool.with { |redis| redis.set Redstream.offset_key_name(@name), offset }
+      @redis.set Redstream.offset_key_name(@name), offset
     end
   end
 end

@@ -39,7 +39,7 @@ module Redstream
   # @return [ConnectionPool] The connection pool
 
   def self.connection_pool
-    @connection_pool ||= ConnectionPool.new(size: 20) { Redis.new }
+    @connection_pool ||= ConnectionPool.new { Redis.new }
   end
 
   # Returns the max id of the specified stream, i.e. the id of the

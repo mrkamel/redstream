@@ -137,7 +137,7 @@ module Redstream
 
     def stream_name(object)
       synchronize do
-        @stream_name_cache[object.class] ||= object.class.name.pluralize.underscore.tr("/", "_")
+        @stream_name_cache[object.class] ||= object.class.redstream_name
       end
     end
 

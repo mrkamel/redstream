@@ -77,6 +77,12 @@ Thread.new do
 end
 ```
 
+You should run a consumer per (stream_name, name) tuple on multiple hosts for
+high availability. They'll use a redis based locking mechanism to ensure that
+only one consumer is consuming messages per tuple while the others are
+hot-standbys, i.e. they'll take over in case the currently active instance
+dies. The same stands for delayers and trimmers.
+
 More concretely, `after_save`, `after_touch` and `after_destroy` only write
 "delay" messages to an additional redis stream. Delay message are exactly like
 any other messages, but are processed by a `Redstream::Delayer` only after a some
@@ -192,23 +198,9 @@ Now we naively pass the `ActiveRecord::Relation` to `Redstream::Producer#bulk`:
   end
 ```
 
-which is equivalent to
-
-```ruby
-  products = Product.where(featured: true).where("price > 20")
-
-  producer.bulk_delay(products)
-  products.update_all(featured: false)
-  producer.bulk_queue(products)
-```
-
-Here, the matching records passed to `bulk_delay` will be different from the
-records passed to `bulk_queue` and `bulk_queue` won't recognize all records
-that have been changed. This would be fixed when the delay messages get
-processed, but still, the situation is undesirable and can be mitigated by
-looping over the batches via `find_in_batches` like shown above.
-
-# Stream Offsets
-# Connection Pooling
-# Locks and Failover
+Here, the matching records passed written before `update_all` (delay messages)
+and after `update_all` (instant messages) will differ, resulting in
+inconsistencies. This would be fixed when the delay messages get processed, but
+still, the situation is undesirable and can be mitigated by looping over the
+batches via `find_in_batches` like shown above.
 
