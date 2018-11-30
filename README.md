@@ -78,11 +78,14 @@ end
 ```
 
 More concretely, `after_save`, `after_touch` and `after_destroy` only write
-"delay" messages to an additional redis stream. Delay message are exactly like
-any other messages, but are processed by a `Redstream::Delayer` only after a some
-(configurable) delay/time has passed to fix inconsistencies. Only
-`after_commit` writes messages to a redis stream for updating secondary
-datastores immediately. The reasoning is simple: usually, i.e. by using only
+"delay" messages to an additional redis stream. Delay message are like any
+other messages, but they get processed by a `Redstream::Delayer` and the
+`Delayer`will wait for some (configurable) delay/time before processing them.
+As the `Delayer` is neccessary to fix inconsistencies, the delay must be at
+least as long as your maxiumum database transaction time. Contrary,
+`after_commit` writes messages to a redis stream from which the messages can
+be fetched immediately to keep the secondary datastores updated in
+near-realtime. The reasoning of all this is simple: usually, i.e. by using only
 one way to update secondary datastores, namely `after_save` or `after_commit`,
 any errors occurring in between `after_save` and `after_commit` result in
 inconsistencies between your primary and secondary datastore. By using these
@@ -108,7 +111,7 @@ Thread.new { Redstream::Delayer.new(stream_name: Product.redstream_name, delay: 
 Thread.new { RedStream::Trimmer.new(stream_name: Product.redstream_name, expiry: 1.day).run }
 ```
 
-You should run a consumer per (stream_name, name) tuple on multiple hosts for
+You should run a consumer per `(stream_name, name)` tuple on multiple hosts for
 high availability. They'll use a redis based locking mechanism to ensure that
 only one consumer is consuming messages per tuple while the others are
 hot-standbys, i.e. they'll take over in case the currently active instance
@@ -130,7 +133,7 @@ end
 
 # Consumer, Delayer, Trimmer, Producer
 
-A `Consumer` fetches those messages that have been added to a redis stream via
+A `Consumer` fetches messages that have been added to a redis stream via
 `after_commit` or by a `Delayer`, i.e. messages that are available for
 immediate retrieval/reindexing/syncing.
 
@@ -141,17 +144,18 @@ amount of time must be longer than your maximum database transaction time at
 least.
 
 A `Trimmer` is responsible to finally remove messages from redis streams.
-Otherwise the messages will fill up your redis server and redis will finally
-crash due to out of memory errors. However, a `Delayer` deletes messages from a
-delay stream, after it moved/copied them, so why not simply delete the messages
-after they have been consumed and successfully processed by a `Consumer`? Well,
-this will probably be added in the future, but please note that you should have
-only one `Delayer` and only one `Trimmer` per stream. However, you can have as
-many `Consumer` instances per stream as you like. Actually, if you need to
-replicate updates into more than one secondary datastore, you will have to use
-multiple `Consumer` instances per stream. Moreover, to name another use case,
-elasticsearch requires to denormalize data and you can e.g. use a second
-`Consumer` to cascade updates to dependent indices stroring denormalized data.
+Without the `Trimmer` messages will fill up your redis server and redis will
+finally crash due to out of memory errors. However, a `Delayer` deletes
+messages from a delay stream, after it moved/copied them, so why not simply
+delete the messages after they have been consumed and successfully processed by
+a `Consumer`? Well, this will probably be added in the future, but please note
+that you should have only one `Delayer` and only one `Trimmer` per stream.
+Contrary, you can have as many `Consumer` instances per stream as you like.
+Actually, if you need to replicate updates into more than one secondary
+datastore, you will have to use multiple `Consumer` instances per stream.
+Moreover, to name another use case, elasticsearch requires to denormalize data
+and you can e.g. use a second `Consumer` to cascade updates to dependent
+indices stroring denormalized data.
 
 A `Producer` adds messages to the concrete redis streams, and you
 can actually pass a concrete `Producer` instance via `redstream_callbacks`:
