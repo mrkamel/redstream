@@ -1,31 +1,44 @@
 
 module Redstream
-  # The Redstream::Trimmer class is neccessary to clean up old messsages after
-  # a configurable amount of time (e.g. 1 day) from a redis stream that will
-  # otherwise fill up redis and finally bring redis down due to out of memory
-  # issues.
+  # The Redstream::Trimmer class is neccessary to clean up messsages after all
+  # consumers have successfully processed and committed them. Otherwise they
+  # would fill up redis and finally bring redis down due to out of memory
+  # issues. The Trimmer will sleep for the specified interval in case there is
+  # nothing to trim. Please note that you must pass an array containing all
+  # consumer names reading from the stream which is about to be trimmed.
+  # Otherwise the Trimmer could trim messages from the stream before all
+  # consumers received the respective messages.
   #
   # @example
-  #   Redstream::Trimmer.new(expiry: 1.day, stream_name: "users").run
+  #   trimmer = Redstream::Trimmer.new(
+  #     interval: 30,
+  #     stream_name: "users",
+  #     consumer_names: ["indexer", "cacher"]
+  #   )
+  #
+  #   trimmer.run
 
   class Trimmer
-    # Initializes a new trimmer. Accepts an expiry param to specify when old
-    # messages should be deleted from a stream, the actual stream name as well
-    # as a logger for debug log messages.
+    # Initializes a new trimmer. Accepts an interval to sleep for in case there
+    # is nothing to trim, the actual stream name, the consumer names as well as
+    # a logger for debug log messages.
     #
-    # @param expiry [Fixnum, Float, ActiveSupport::Duration] Specifies the time
-    #   to live for messages.
+    # @param interval [Fixnum, Float] Specifies a time to sleep in case there is
+    #   nothing to trim.
     # @param stream_name [String] The name of the stream that should be trimmed.
     #   Please note, that redstream adds a prefix to the redis keys. However,
     #   the stream_name param must be specified without any prefixes here. When
     #   using Redstream::Model, the stream name is the downcased, pluralized
     #   and underscored version of the model name. I.e., the stream name for a
     #   'User' model will be 'users'
+    # @params consumer_names [Array] The list of all consumers reading from the
+    #   specified stream
     # @param logger [Logger] A logger used for debug messages
 
-    def initialize(expiry:, stream_name:, logger: Logger.new("/dev/null"))
-      @expiry = expiry
+    def initialize(interval:, stream_name:, consumer_names:, logger: Logger.new("/dev/null"))
+      @interval = interval
       @stream_name = stream_name
+      @consumer_names = consumer_names
       @logger = logger
       @lock = Lock.new(name: "trimmer:#{stream_name}")
     end
@@ -42,20 +55,24 @@ module Redstream
 
     def run_once
       got_lock = @lock.acquire do
-        messages = Redstream.connection_pool.with do |redis|
-          redis.xrange Redstream.stream_key_name(@stream_name), "-", (Time.now.to_f * 1000).to_i - @expiry, "COUNT", 1_000
+        min_committed_id = Redstream.connection_pool.with do |redis|
+          offset_key_names = @consumer_names.map do |consumer_name|
+            Redstream.offset_key_name(stream_name: @stream_name, consumer_name: consumer_name)
+          end
+
+          redis.mget(offset_key_names).map(&:to_s).reject(&:empty?).min
         end
-          
-        return if messages.nil? || messages.empty?
 
-        seconds_to_sleep = messages.first[0].to_f / 1_000 + @expiry.to_i - Time.now.to_f
+        return sleep(@interval) unless min_committed_id
 
-        if seconds_to_sleep > 0
-          sleep(seconds_to_sleep + 1)
-        else
-          expired_ids = messages.map(&:first).select { |id| id.to_f / 1_000 + @expiry.to_f - Time.now.to_f < 0 }
+        loop do
+          messages = Redstream.connection_pool.with do |redis|
+            redis.xrange Redstream.stream_key_name(@stream_name), "-", min_committed_id, "COUNT", 1_000
+          end
 
-          Redstream.connection_pool.with { |redis| redis.xdel Redstream.stream_key_name(@stream_name), expired_ids }
+          return sleep(@interval) if messages.nil? || messages.empty?
+
+          Redstream.connection_pool.with { |redis| redis.xdel Redstream.stream_key_name(@stream_name), messages.map(&:first) }
 
           @logger.debug "Trimmed #{messages.size} messages from #{@stream_name}"
         end

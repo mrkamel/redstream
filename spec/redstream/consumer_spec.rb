@@ -29,7 +29,7 @@ RSpec.describe Redstream::Consumer do
 
     expect(all_messages.size).to eq(2)
 
-    redis.set(Redstream.offset_key_name("products:consumer"), all_messages[0][0])
+    redis.set(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"), all_messages[0][0])
 
     messages = nil
 
@@ -66,28 +66,13 @@ RSpec.describe Redstream::Consumer do
   it "should update the offset" do
     create :product
 
-    expect(redis.get(Redstream.offset_key_name("products:consumer"))).to be(nil)
+    expect(redis.get(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"))).to be(nil)
 
     all_messages = redis.xrange(Redstream.stream_key_name("products"), "-", "+")
 
     Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once {}
 
-    expect(redis.get(Redstream.offset_key_name("products:consumer"))).to eq(all_messages.last[0])
-  end
-
-  it "should return a its maxiumum committed id" do
-    consumer = Redstream::Consumer.new(name: "consumer", stream_name: "products")
-
-    expect(consumer.max_committed_id).to be_nil
-
-    id1 = redis.xadd("redstream:stream:products", "*", "key", "value")
-    id2 = redis.xadd("redstream:stream:products", "*", "key", "value")
-
-    consumer.run_once do |messages|
-      # nothing
-    end
-
-    expect(consumer.max_committed_id).to eq(id2)
+    expect(redis.get(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"))).to eq(all_messages.last[0])
   end
 end
 

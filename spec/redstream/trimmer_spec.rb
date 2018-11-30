@@ -2,28 +2,29 @@
 require File.expand_path("../spec_helper", __dir__)
 
 RSpec.describe Redstream::Trimmer do
-  it "should delete expired messages" do
-    redis.xadd Redstream.stream_key_name("default"), "*", "payload", JSON.dump(value: "message")
-
-    Redstream::Trimmer.new(expiry: 0, stream_name: "default").run_once
-
-    expect(redis.xlen(Redstream.stream_key_name("default"))).to eq(0)
-  end
-
-  it "shouldn't delete not yet expired messages" do
-    redis.xadd Redstream.stream_key_name("default"), "*", "payload", JSON.dump(value: "message")
-
-    trimmer = Redstream::Trimmer.new(expiry: 2, stream_name: "default")
-
-    thread = Thread.new do
-      trimmer.run_once
+  it "should trim a stream to the minimum committed id" do
+    ids = Array.new(4) do |i|
+      redis.xadd Redstream.stream_key_name("default"), "*", "payload", JSON.dump(value: "message#{i}")
     end
 
-    sleep 1
+    redis.set Redstream.offset_key_name(stream_name: "default", consumer_name: "consumer1"), ids[1]
+    redis.set Redstream.offset_key_name(stream_name: "default", consumer_name: "consumer2"), ids[2]
 
-    expect(redis.xlen(Redstream.stream_key_name("default"))).to eq(1)
+    trimmer = Redstream::Trimmer.new(
+      interval: 5,
+      stream_name: "default",
+      consumer_names: ["consumer1", "consumer2", "consumer_without_committed_id"]
+    )
 
-    thread.join
+    trimmer.run_once
+
+    expect(redis.xlen(Redstream.stream_key_name("default"))).to eq(2)
+  end
+
+  it "should sleep for the specified time if there's nothing to trim" do
+    trimmer = Redstream::Trimmer.new(interval: 1, stream_name: "default", consumer_names: ["unknown_consumer"])
+    trimmer.expects(:sleep).with(1).returns(true)
+    trimmer.run_once
   end
 end
 

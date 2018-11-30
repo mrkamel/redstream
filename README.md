@@ -63,7 +63,13 @@ Redstream::Delayer.new(stream_name: Product.redstream_name, delay: 5.minutes).ru
 
 # ...
 
-RedStream::Trimmer.new(stream_name: Product.redstream_name, expiry: 1.day).run
+trimmer = RedStream::Trimmer.new(
+  stream_name: Product.redstream_name,
+  consumer_names: ["indexer", "cacher"],
+  interval: 30
+)
+
+trimmer.run
 ```
 
 As all of them are blocking, you should run them in individual threads. But as
@@ -107,8 +113,13 @@ Thread.new do
   end
 end
 
-Thread.new { Redstream::Delayer.new(stream_name: Product.redstream_name, delay: 5.minutes).run }
-Thread.new { RedStream::Trimmer.new(stream_name: Product.redstream_name, expiry: 1.day).run }
+Thread.new do
+  Redstream::Delayer.new(stream_name: Product.redstream_name, delay: 5.minutes).run
+end
+
+Thread.new do
+  RedStream::Trimmer.new(stream_name: Product.redstream_name, consumer_names: ["indexer"], interval: 30).run
+end
 ```
 
 You should run a consumer per `(stream_name, name)` tuple on multiple hosts for
@@ -137,25 +148,36 @@ A `Consumer` fetches messages that have been added to a redis stream via
 `after_commit` or by a `Delayer`, i.e. messages that are available for
 immediate retrieval/reindexing/syncing.
 
+```ruby
+  Redstream::Consumer.new(stream_name: Product.redstream_name, name: "indexer").run do |messages|
+    ids = messages.map { |message| message.payload["id"] }
+
+    ProductIndex.import Product.where(id: ids)
+  end
+```
+
 A `Delayer` fetches messages that have been added to a second redis stream via
 `after_save`, `after_touch` and `after_destroy` to be retrieved after a certain
 configurable amount of time (5 minutes usually) to fix inconsistencies. The
 amount of time must be longer than your maximum database transaction time at
 least.
 
+```ruby
+  Redstream::Delayer.new(stream_name: Product.redstream_name, delay: 5.minutes).run
+```
+
 A `Trimmer` is responsible to finally remove messages from redis streams.
-Without the `Trimmer` messages will fill up your redis server and redis will
-finally crash due to out of memory errors. However, a `Delayer` deletes
-messages from a delay stream, after it moved/copied them, so why not simply
-delete the messages after they have been consumed and successfully processed by
-a `Consumer`? Well, this will probably be added in the future, but please note
-that you should have only one `Delayer` and only one `Trimmer` per stream.
-Contrary, you can have as many `Consumer` instances per stream as you like.
-Actually, if you need to replicate updates into more than one secondary
-datastore, you will have to use multiple `Consumer` instances per stream.
-Moreover, to name another use case, elasticsearch requires to denormalize data
-and you can e.g. use a second `Consumer` to cascade updates to dependent
-indices stroring denormalized data.
+Without a `Trimmer` messages will fill up your redis server and redis will
+finally crash due to out of memory errors. To be able to trim a stream, you
+must pass an array containing all consumer names reading from the respective
+stream. The `Trimmer` then continously checks how far each consumer already
+processed the stream and trims the stream up to the committed minimum.
+Contrary, if there is nothing to trim, the `Trimmer` will sleep for a specified
+`interval`.
+
+```ruby
+  RedStream::Trimmer.new(stream_name: Product.redstream_name, consumer_names: ["indexer"], interval: 30).run
+```
 
 A `Producer` adds messages to the concrete redis streams, and you
 can actually pass a concrete `Producer` instance via `redstream_callbacks`:

@@ -25,7 +25,7 @@ RSpec.describe Redstream::Delayer do
     sleep 1
 
     expect(redis.xlen(Redstream.stream_key_name("target"))).to eq(1)
-    expect(redis.get(Redstream.offset_key_name("target.delay:delayer"))).not_to be_nil
+    expect(redis.get(Redstream.offset_key_name(stream_name: "target.delay", consumer_name: "delayer"))).not_to be_nil
 
     thread.join
 

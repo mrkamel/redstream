@@ -58,6 +58,20 @@ module Redstream
     end
   end
 
+  # Returns the max committed id, i.e. the consumer's offset, for the specified
+  # consumer name.
+  #
+  # @param stream_name [String] the stream name
+  # @param name [String] the consumer name
+  #
+  # @return [String, nil] The max committed offset, or nil
+
+  def self.max_consumer_id(stream_name:, consumer_name:)
+    connection_pool.with do |redis|
+      redis.get offset_key_name(stream_name: stream_name, consumer_name: consumer_name)
+    end
+  end
+
   # @api private
   #
   # Generates the low level redis stream key name.
@@ -77,8 +91,8 @@ module Redstream
   # @param consumer_name A high level consumer name
   # @return [String] A redis key name for storing a stream's current offset
 
-  def self.offset_key_name(consumer_name)
-    "redstream:offset:#{consumer_name}"
+  def self.offset_key_name(stream_name:, consumer_name:)
+    "redstream:offset:#{stream_name}:#{consumer_name}"
   end
 
   # @api private

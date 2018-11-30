@@ -37,7 +37,7 @@ module Redstream
       end 
 
       def redstream_name
-        name.pluralize.underscore.tr("/", ":")
+        name.pluralize.underscore
       end
     end
 
