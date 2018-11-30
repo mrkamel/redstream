@@ -222,3 +222,11 @@ inconsistencies. This would be fixed when the delay messages get processed, but
 still, the situation is undesirable and can be mitigated by looping over the
 batches via `find_in_batches` like shown above.
 
+## Contributing
+
+Bug reports and pull requests are welcome on GitHub at https://github.com/mrkamel/redstream
+
+## License
+
+The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
+
