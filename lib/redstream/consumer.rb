@@ -36,6 +36,14 @@ module Redstream
       @lock = Lock.new(name: @full_name)
     end
 
+    # Returns its maximum committed id, i.e. the consumer's offset.
+    #
+    # @return [String, nil] The committed id, or nil
+
+    def max_committed_id
+      @redis.get Redstream.offset_key_name(@full_name)
+    end
+
     # Loops and thus blocks forever while reading messages from the specified
     # stream and yielding them in batches.
     #

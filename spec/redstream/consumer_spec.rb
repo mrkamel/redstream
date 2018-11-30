@@ -74,5 +74,20 @@ RSpec.describe Redstream::Consumer do
 
     expect(redis.get(Redstream.offset_key_name("products:consumer"))).to eq(all_messages.last[0])
   end
+
+  it "should return a its maxiumum committed id" do
+    consumer = Redstream::Consumer.new(name: "consumer", stream_name: "products")
+
+    expect(consumer.max_committed_id).to be_nil
+
+    id1 = redis.xadd("redstream:stream:products", "*", "key", "value")
+    id2 = redis.xadd("redstream:stream:products", "*", "key", "value")
+
+    consumer.run_once do |messages|
+      # nothing
+    end
+
+    expect(consumer.max_committed_id).to eq(id2)
+  end
 end
 
