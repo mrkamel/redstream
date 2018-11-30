@@ -79,6 +79,12 @@ module Redstream
       end
 
       sleep(5) unless got_lock
+    rescue => e
+      @logger.error e
+
+      sleep 5
+
+      retry
     end
   end
 end

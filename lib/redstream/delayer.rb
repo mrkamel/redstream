@@ -68,6 +68,12 @@ module Redstream
 
         deliver
       end
+    rescue => e
+      @logger.error e
+
+      sleep 5
+
+      retry
     end
 
     private
