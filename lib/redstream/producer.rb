@@ -41,32 +41,33 @@ module Redstream
     # by-pass model lifecycle callbacks (after_save, etc.), as Redstream::Model
     # can't recognize these updates and write them to redis streams
     # automatically. You need to pass the records to be updated to the bulk
-    # method. This can be a single object, an array of objects, an
-    # ActiveRecord::Relation or anything responding to #each or #find_each. The
-    # bulk method that writes batches of delay messages to redis for these
-    # records, yields and then writes the same messages again, but for
-    # immediate retrieval.
+    # method. The bulk method writes delay messages for the records to kafka,
+    # then yields and the writes the message for immediate retrieval. The
+    # method must ensure that the same set of records is used for the delay
+    # messages and the instant messages. Thus, you optimally, pass an array of
+    # records to it. If you pass an ActiveRecord::Relation, the method
+    # converts it to an array, i.e. loading all matching records into memory.
     #
-    # @param scope [#each, #find_each] The object/objects that will be updated,
-    #   deleted, etc.
+    # @param records [#to_a] The object/objects that will be updated or deleted
 
-    def bulk(scope)
-      bulk_delay(scope)
+    def bulk(records)
+      records_array = Array(records)
+
+      bulk_delay(records_array)
 
       yield
 
-      bulk_queue(scope)
+      bulk_queue(records_array)
     end
 
     # @api private
     #
     # Writes delay messages to a delay stream in redis.
     #
-    # @param scope [#each, #find_each] The object/objects that will be updated,
-    #   deleted, etc.
+    # @param records [#to_a] The object/objects that will be updated or deleted
 
-    def bulk_delay(scope)
-      enumerable(scope).each_slice(250) do |slice|
+    def bulk_delay(records)
+      records.each_slice(250) do |slice|
         Redstream.connection_pool.with do |redis|
           redis.pipelined do
             slice.map do |object|
@@ -87,11 +88,10 @@ module Redstream
     #
     # Writes messages to a stream in redis for immediate retrieval.
     #
-    # @param scope [#each, #find_each] The object/objects that will be updated,
-    #   deleted, etc.
+    # @param records [#to_a] The object/objects that will be updated deleted
 
-    def bulk_queue(scope)
-      enumerable(scope).each_slice(250) do |slice|
+    def bulk_queue(records)
+      records.each_slice(250) do |slice|
         Redstream.connection_pool.with do |redis|
           redis.pipelined do
             slice.each do |object|
@@ -139,13 +139,6 @@ module Redstream
       synchronize do
         @stream_name_cache[object.class] ||= object.class.redstream_name
       end
-    end
-
-    def enumerable(scope)
-      return scope.find_each if scope.respond_to?(:find_each)
-      return scope if scope.respond_to?(:each)
-
-      Array(scope)
     end
   end
 end

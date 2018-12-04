@@ -211,8 +211,10 @@ Product.where(on_stock: true).update_all(featured: true)
 to
 
 ```ruby
+RedstreamProducer = Redstream::Producer.new
+
 Product.where(on_stock: true).find_in_batches do |products|
-  producer.bulk products do
+  RedstreamProducer.bulk products do
     Product.where(id: products.map(&:id)).update_all(featured: true)
   end
 end
@@ -221,28 +223,13 @@ end
 The `Producer` will write a message for every matched record into the delay
 stream before `update_all` is called and will write another message for every
 record to the main stream after `update_all` is called - just like it is done
-within the model lifecycle callbacks. But why do you need to do it in batches?
-Imagine the following:
+within the model lifecycle callbacks.
 
-```ruby
-Product.where(featured: true).where("price > 20").update_all(featured: false)
-```
-
-Now we naively pass the `ActiveRecord::Relation` to `Redstream::Producer#bulk`:
-
-```ruby
-  products = Product.where(featured: true).where("price > 20")
-
-  producer.bulk products do
-    products.update_all(featured: false)
-  end
-```
-
-Here, the matching records passed written before `update_all` (delay messages)
-and after `update_all` (instant messages) will differ, resulting in
-inconsistencies. This would be fixed when the delay messages get processed, but
-still, the situation is undesirable and can be mitigated by looping over the
-batches via `find_in_batches` like shown above.
+The `#bulk` method must ensure that the same set of records is used for the
+delay messages and the instant messages. Thus, you better directly pass an
+array of records to `Redstream::Producer#bulk`, like shown above. If you pass
+an `ActiveRecord::Relation`, the `#bulk` method will convert it to an array,
+i.e. load the whole result set into memory.
 
 ## Contributing
 
