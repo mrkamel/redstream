@@ -68,21 +68,23 @@ module Redstream
         offset = @redis.get(Redstream.offset_key_name(stream_name: @stream_name, consumer_name: @name))
         offset ||= "0-0"
 
+        stream_key_name = Redstream.stream_key_name(@stream_name)
+
         response = begin
-          @redis.xread("COUNT", @batch_size, "BLOCK", 5_000, "STREAMS", Redstream.stream_key_name(@stream_name), offset)
+          @redis.xread(stream_key_name, offset, count: @batch_size, block: 5_000)
         rescue Redis::TimeoutError
           nil
         end
 
         return unless response
 
-        messages = response[0][1].map do |raw_message|
+        messages = response[stream_key_name].map do |raw_message|
           Message.new(raw_message)
         end
 
         block.call(messages)
 
-        offset = response[0][1].last[0]
+        offset = response[stream_key_name].last[0]
 
         return unless offset
 

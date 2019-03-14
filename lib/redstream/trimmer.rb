@@ -67,7 +67,7 @@ module Redstream
 
         loop do
           messages = Redstream.connection_pool.with do |redis|
-            redis.xrange Redstream.stream_key_name(@stream_name), "-", min_committed_id, "COUNT", 1_000
+            redis.xrange(Redstream.stream_key_name(@stream_name), "-", min_committed_id, count: 1_000)
           end
 
           return sleep(@interval) if messages.nil? || messages.empty?

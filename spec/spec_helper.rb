@@ -50,11 +50,11 @@ RSpec.configure do |config|
     DatabaseCleaner.strategy = :truncation
   end
 
-  config.around(:each) do |example|
+  config.around do |example|
     DatabaseCleaner.cleaning { example.run }
   end
 
-  config.after(:each) do
+  config.after do
     Redis.new.flushdb
   end
 end

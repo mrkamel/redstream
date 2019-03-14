@@ -50,7 +50,7 @@ module Redstream
 
   def self.max_stream_id(stream_name)
     connection_pool.with do |redis|
-      message = redis.xrevrange(stream_key_name(stream_name), "+", "-", "COUNT", 1)[0]
+      message = redis.xrevrange(stream_key_name(stream_name), "+", "-", count: 1).first
 
       return unless message
 

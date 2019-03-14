@@ -39,7 +39,7 @@ module Redstream
     # @returns The fields hash
 
     def fields
-      @fields ||= Hash[@raw_message[1].each_slice(2).to_a]
+      @fields ||= @raw_message[1]
     end
 
     # Returns the raw message content as returned by redis.

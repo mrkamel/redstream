@@ -12,7 +12,7 @@ RSpec.describe Redstream::Model do
     end
 
     expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(1)
-    expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+")[0][1]).to eq(["payload", JSON.dump(product.redstream_payload)])
+    expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+").first[1]).to eq("payload" => JSON.dump(product.redstream_payload))
   end
 
   it "should delay after touch" do
@@ -27,7 +27,7 @@ RSpec.describe Redstream::Model do
     end
 
     expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(2)
-    expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+")[1][1]).to eq(["payload", JSON.dump(product.redstream_payload)])
+    expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+").last[1]).to eq("payload" => JSON.dump(product.redstream_payload))
   end
 
   it "should delay after destroy" do
@@ -42,7 +42,7 @@ RSpec.describe Redstream::Model do
     end
 
     expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(2)
-    expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+")[1][1]).to eq(["payload", JSON.dump(product.redstream_payload)])
+    expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+").last[1]).to eq("payload" => JSON.dump(product.redstream_payload))
   end
 
   it "should queue after commit" do
@@ -51,7 +51,7 @@ RSpec.describe Redstream::Model do
     product = create(:product)
 
     expect(redis.xlen(Redstream.stream_key_name("products"))).to eq(1)
-    expect(redis.xrange(Redstream.stream_key_name("products"), "-", "+")[0][1]).to eq(["payload", JSON.dump(product.redstream_payload)])
+    expect(redis.xrange(Redstream.stream_key_name("products"), "-", "+").first[1]).to eq("payload" => JSON.dump(product.redstream_payload))
   end
 end
 

@@ -86,7 +86,7 @@ module Redstream
       Redstream.connection_pool.with do |redis|
         redis.pipelined do
           @batch.each do |message|
-            redis.xadd Redstream.stream_key_name(@stream_name), "*", "payload", message.fields["payload"]
+            redis.xadd Redstream.stream_key_name(@stream_name), payload: message.fields["payload"]
           end
         end
 

@@ -29,7 +29,7 @@ RSpec.describe Redstream::Consumer do
 
     expect(all_messages.size).to eq(2)
 
-    redis.set(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"), all_messages[0][0])
+    redis.set(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"), all_messages.first[0])
 
     messages = nil
 
@@ -40,7 +40,7 @@ RSpec.describe Redstream::Consumer do
     end
 
     expect(messages.size).to eq(1)
-    expect(messages[0].raw_message).to eq(all_messages[1])
+    expect(messages.first.raw_message).to eq(all_messages.last)
   end
 
   it "should yield messages in batches" do
