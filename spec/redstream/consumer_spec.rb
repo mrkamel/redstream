@@ -2,77 +2,79 @@
 require File.expand_path("../spec_helper", __dir__)
 
 RSpec.describe Redstream::Consumer do
-  it "should be mutually exclusive" do
-    create :product
+  describe "#run_once" do
+    it "is mutually exclusive" do
+      create :product
 
-    calls = Concurrent::AtomicFixnum.new(0)
+      calls = Concurrent::AtomicFixnum.new(0)
 
-    threads = Array.new(2) do |i|
-      Thread.new do
-        Redstream::Consumer.new(name: "consumer", stream_name: "products", batch_size: 5).run_once do |batch|
-          calls.increment
+      threads = Array.new(2) do |i|
+        Thread.new do
+          Redstream::Consumer.new(name: "consumer", stream_name: "products", batch_size: 5).run_once do |batch|
+            calls.increment
 
-          sleep 1
+            sleep 1
+          end
         end
       end
+
+      threads.each(&:join)
+
+      expect(calls.value).to eq(1)
     end
 
-    threads.each(&:join)
+    it "is using the existing offset" do
+      create_list(:product, 2)
 
-    expect(calls.value).to eq(1)
-  end
+      all_messages = redis.xrange(Redstream.stream_key_name("products"), "-", "+")
 
-  it "should use an existing offset" do
-    create_list(:product, 2)
+      expect(all_messages.size).to eq(2)
 
-    all_messages = redis.xrange(Redstream.stream_key_name("products"), "-", "+")
+      redis.set(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"), all_messages.first[0])
 
-    expect(all_messages.size).to eq(2)
+      messages = nil
 
-    redis.set(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"), all_messages.first[0])
+      consumer = Redstream::Consumer.new(name: "consumer", stream_name: "products")
 
-    messages = nil
+      consumer.run_once do |batch|
+        messages = batch
+      end
 
-    consumer = Redstream::Consumer.new(name: "consumer", stream_name: "products")
-
-    consumer.run_once do |batch|
-      messages = batch
+      expect(messages.size).to eq(1)
+      expect(messages.first.raw_message).to eq(all_messages.last)
     end
 
-    expect(messages.size).to eq(1)
-    expect(messages.first.raw_message).to eq(all_messages.last)
-  end
+    it "yields messages in batches" do
+      products = create_list(:product, 15)
 
-  it "should yield messages in batches" do
-    products = create_list(:product, 15)
+      consumer = Redstream::Consumer.new(name: "consumer", stream_name: "products", batch_size: 10)
 
-    consumer = Redstream::Consumer.new(name: "consumer", stream_name: "products", batch_size: 10)
+      messages = nil
 
-    messages = nil
+      consumer.run_once do |batch|
+        messages = batch
+      end
 
-    consumer.run_once do |batch|
-      messages = batch
+      expect(messages.size).to eq(10)
+
+      consumer.run_once do |batch|
+        messages = batch
+      end
+
+      expect(messages.size).to eq(5)
     end
 
-    expect(messages.size).to eq(10)
+    it "updates the offset" do
+      create :product
 
-    consumer.run_once do |batch|
-      messages = batch
+      expect(redis.get(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"))).to be(nil)
+
+      all_messages = redis.xrange(Redstream.stream_key_name("products"), "-", "+")
+
+      Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once {}
+
+      expect(redis.get(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"))).to eq(all_messages.last[0])
     end
-
-    expect(messages.size).to eq(5)
-  end
-
-  it "should update the offset" do
-    create :product
-
-    expect(redis.get(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"))).to be(nil)
-
-    all_messages = redis.xrange(Redstream.stream_key_name("products"), "-", "+")
-
-    Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once {}
-
-    expect(redis.get(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"))).to eq(all_messages.last[0])
   end
 end
 

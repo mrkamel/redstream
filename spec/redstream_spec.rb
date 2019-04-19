@@ -2,51 +2,59 @@
 require File.expand_path("spec_helper", __dir__)
 
 RSpec.describe Redstream do
-  it "should allow seting the connection pool" do
-    begin
-      connection_pool = Redstream.connection_pool
+  describe ".connection_pool=" do
+    it "sets the connection pool" do
+      begin
+        connection_pool = Redstream.connection_pool
 
-      Redstream.connection_pool = "pool"
-      expect(Redstream.connection_pool).to eq("pool")
-    ensure
-      Redstream.connection_pool = connection_pool
+        Redstream.connection_pool = "pool"
+        expect(Redstream.connection_pool).to eq("pool")
+      ensure
+        Redstream.connection_pool = connection_pool
+      end
     end
   end
 
-  it "should allow getting the connection pool" do
-    begin
-      connection_pool = Redstream.connection_pool
+  describe ".connection_pool" do
+    it "returns the connection pool" do
+      begin
+        connection_pool = Redstream.connection_pool
 
-      Redstream.connection_pool = nil
-      expect(Redstream.connection_pool).to be_a(ConnectionPool)
+        Redstream.connection_pool = nil
+        expect(Redstream.connection_pool).to be_a(ConnectionPool)
 
-      Redstream.connection_pool = "pool"
-      expect(Redstream.connection_pool).to eq("pool")
-    ensure
-      Redstream.connection_pool = connection_pool
+        Redstream.connection_pool = "pool"
+        expect(Redstream.connection_pool).to eq("pool")
+      ensure
+        Redstream.connection_pool = connection_pool
+      end
     end
   end
 
-  it "should return a stream's max id" do
-    expect(Redstream.max_stream_id("products")).to be_nil
+  describe ".max_stream_id" do
+    it "returns the stream's max id" do
+      expect(Redstream.max_stream_id("products")).to be_nil
 
-    id1 = redis.xadd("redstream:stream:products", key: "value")
-    id2 = redis.xadd("redstream:stream:products", key: "value")
+      id1 = redis.xadd("redstream:stream:products", key: "value")
+      id2 = redis.xadd("redstream:stream:products", key: "value")
 
-    expect(Redstream.max_stream_id("products")).to eq(id2)
+      expect(Redstream.max_stream_id("products")).to eq(id2)
+    end
   end
 
-  it "should return a consumer's max id" do
-    expect(Redstream.max_consumer_id(stream_name: "products", consumer_name: "consumer")).to be_nil
+  describe ".max_consumer_id" do
+    it "returns the consumer's max id" do
+      expect(Redstream.max_consumer_id(stream_name: "products", consumer_name: "consumer")).to be_nil
 
-    id1 = redis.xadd("redstream:stream:products", key: "value")
-    id2 = redis.xadd("redstream:stream:products", key: "value")
+      id1 = redis.xadd("redstream:stream:products", key: "value")
+      id2 = redis.xadd("redstream:stream:products", key: "value")
 
-    Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once do |messages|
-      # nothing
+      Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once do |messages|
+        # nothing
+      end
+
+      expect(Redstream.max_consumer_id(stream_name: "products", consumer_name: "consumer")).to eq(id2)
     end
-
-    expect(Redstream.max_consumer_id(stream_name: "products", consumer_name: "consumer")).to eq(id2)
   end
 
   describe ".stream_key_name" do
