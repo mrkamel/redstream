@@ -6,6 +6,7 @@ require "database_cleaner"
 require "timecop"
 require "concurrent"
 require "mocha"
+require "rspec/instafail"
 
 RSpec.configure do |config|
   config.mock_with :mocha
@@ -43,6 +44,9 @@ module SpecHelper
 end
 
 RSpec.configure do |config|
+  config.add_formatter(RSpec::Instafail)
+  config.add_formatter(:progress)
+
   config.include SpecHelper
   config.include FactoryBot::Syntax::Methods
 

@@ -49,16 +49,61 @@ RSpec.describe Redstream do
     expect(Redstream.max_consumer_id(stream_name: "products", consumer_name: "consumer")).to eq(id2)
   end
 
-  it "should generate a stream key name" do
-    expect(Redstream.stream_key_name("products")).to eq("redstream:stream:products")
+  describe ".stream_key_name" do
+    context "without namespace" do
+      it "returns the stream key name" do
+        expect(Redstream.stream_key_name("products")).to eq("redstream:stream:products")
+      end
+    end
+
+    context "with namespace" do
+      it "returns the stream key name" do
+        begin
+          Redstream.namespace = "namespace"
+          expect(Redstream.stream_key_name("products")).to eq("namespace:redstream:stream:products")
+        ensure
+          Redstream.namespace = nil
+        end
+      end
+    end
   end
 
-  it "should generate a offset key name" do
-    expect(Redstream.offset_key_name(stream_name: "stream", consumer_name: "consumer")).to eq("redstream:offset:stream:consumer")
+  describe ".offset_key_name" do
+    context "without namespace" do
+      it "returns the offset key name" do
+        expect(Redstream.offset_key_name(stream_name: "stream", consumer_name: "consumer")).to eq("redstream:offset:stream:consumer")
+      end
+    end
+
+    context "with namespace" do
+      it "returns the offset key name" do
+        begin
+          Redstream.namespace = "namespace"
+          expect(Redstream.offset_key_name(stream_name: "stream", consumer_name: "consumer")).to eq("namespace:redstream:offset:stream:consumer")
+        ensure
+          Redstream.namespace = nil
+        end
+      end
+    end
   end
 
-  it "should generate a lock key name" do
-    expect(Redstream.lock_key_name("name")).to eq("redstream:lock:name")
+  describe ".lock_key_name" do
+    context "without namespace" do
+      it "returns the lock key name" do
+        expect(Redstream.lock_key_name("name")).to eq("redstream:lock:name")
+      end
+    end
+
+    context "with namespace" do
+      it "returns the lock key name" do
+        begin
+          Redstream.namespace = "namespace"
+          expect(Redstream.lock_key_name("name")).to eq("namespace:redstream:lock:name")
+        ensure
+          Redstream.namespace = nil
+        end
+      end
+    end
   end
 end
 

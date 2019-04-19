@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "factory_bot"
   spec.add_development_dependency "timecop"
   spec.add_development_dependency "concurrent-ruby"
+  spec.add_development_dependency "rspec-instafail"
   spec.add_development_dependency "mocha"
 
   spec.add_dependency "connection_pool"

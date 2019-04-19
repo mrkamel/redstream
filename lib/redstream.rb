@@ -16,7 +16,7 @@ require "redstream/model"
 require "redstream/trimmer"
 
 module Redstream
-  # Redstream uses the connection_pool gem to pool redis connections.  In case
+  # Redstream uses the connection_pool gem to pool redis connections. In case
   # you have a distributed redis setup (sentinel/cluster) or the default pool
   # size doesn't match your requirements, then you must specify the connection
   # pool. A connection pool is neccessary, because redstream is using blocking
@@ -40,6 +40,23 @@ module Redstream
 
   def self.connection_pool
     @connection_pool ||= ConnectionPool.new { Redis.new }
+  end
+
+  # You can specify a namespace to use for redis keys. This is useful in case
+  # you are using a shared redis.
+  #
+  # @example
+  #   Redstream.namespace = 'my_app'
+
+  def self.namespace=(namespace)
+    @namespace = namespace
+  end
+
+  # Returns the previously set namespace for redis keys to be used by
+  # Redstream.
+
+  def self.namespace
+    @namespace
   end
 
   # Returns the max id of the specified stream, i.e. the id of the
@@ -80,7 +97,7 @@ module Redstream
   # @return [String] A low level redis stream key name
 
   def self.stream_key_name(stream_name)
-    "redstream:stream:#{stream_name}"
+    "#{base_key_name}:stream:#{stream_name}"
   end
 
   # @api private
@@ -92,7 +109,7 @@ module Redstream
   # @return [String] A redis key name for storing a stream's current offset
 
   def self.offset_key_name(stream_name:, consumer_name:)
-    "redstream:offset:#{stream_name}:#{consumer_name}"
+    "#{base_key_name}:offset:#{stream_name}:#{consumer_name}"
   end
 
   # @api private
@@ -103,7 +120,15 @@ module Redstream
   # @return [String] A redis key name used for locking
 
   def self.lock_key_name(name)
-    "redstream:lock:#{name}"
+    "#{base_key_name}:lock:#{name}"
+  end
+
+  # @api private
+  #
+  # Returns the full name namespace for redis keys.
+
+  def self.base_key_name
+    [namespace, "redstream"].compact.join(":")
   end
 end
 

@@ -231,6 +231,18 @@ array of records to `Redstream::Producer#bulk`, like shown above. If you pass
 an `ActiveRecord::Relation`, the `#bulk` method will convert it to an array,
 i.e. load the whole result set into memory.
 
+## Namespacing
+
+In case you are using a shared redis, where multiple appications read/write
+from the same redis server using Redstream, key conflicts could occur.
+To avoid that, you want to use namespacing:
+
+```ruby
+Redstream.namespace = 'my_app'
+```
+
+such that every application will have its own namespaced Redstream keys.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/mrkamel/redstream
