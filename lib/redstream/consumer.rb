@@ -76,7 +76,7 @@ module Redstream
           nil
         end
 
-        return unless response
+        return if response.nil? || response[stream_key_name].nil? || response[stream_key_name].empty?
 
         messages = response[stream_key_name].map do |raw_message|
           Message.new(raw_message)
