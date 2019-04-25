@@ -3,6 +3,16 @@ require File.expand_path("../spec_helper", __dir__)
 
 RSpec.describe Redstream::Consumer do
   describe "#run_once" do
+    it "doesn't call the block without messages" do
+      called = false
+
+      Redstream::Consumer.new(name: "consumer", stream_name: "products", batch_size: 5).run_once do |batch|
+        called = true
+      end
+
+      expect(called).to eq(false)
+    end
+
     it "is mutually exclusive" do
       create :product
 
