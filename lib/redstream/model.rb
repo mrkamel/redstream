@@ -30,10 +30,10 @@ module Redstream
       #   responsible for writing to a redis stream
 
       def redstream_callbacks(producer: Producer.new)
-        after_save { |object| producer.delay object }
-        after_touch { |object| producer.delay object }
-        after_destroy { |object| producer.delay object }
-        after_commit { |object| producer.queue object }
+        after_save { |object| producer.delay(object) if object.saved_changes.present? }
+        after_touch { |object| producer.delay(object) }
+        after_destroy { |object| producer.delay(object) }
+        after_commit { |object| producer.queue(object) if object.saved_changes.present? }
       end 
 
       def redstream_name
