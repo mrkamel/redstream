@@ -1,4 +1,3 @@
-
 module Redstream
   # A Redstream::Producer is responsible for writing the actual messages to
   # redis. This includes the delay messages as well as the messages for
@@ -142,4 +141,3 @@ module Redstream
     end
   end
 end
-

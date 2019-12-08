@@ -1,4 +1,3 @@
-
 module Redstream
   # The Redstream::Trimmer class is neccessary to clean up messsages after all
   # consumers have successfully processed and committed them. Otherwise they
@@ -79,7 +78,7 @@ module Redstream
       end
 
       sleep(5) unless got_lock
-    rescue => e
+    rescue StandardError => e
       @logger.error e
 
       sleep 5
@@ -88,4 +87,3 @@ module Redstream
     end
   end
 end
-

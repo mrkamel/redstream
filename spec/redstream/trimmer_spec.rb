@@ -1,4 +1,3 @@
-
 require File.expand_path("../spec_helper", __dir__)
 
 RSpec.describe Redstream::Trimmer do
@@ -29,4 +28,3 @@ RSpec.describe Redstream::Trimmer do
     end
   end
 end
-

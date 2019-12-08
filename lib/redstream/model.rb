@@ -1,4 +1,3 @@
-
 module Redstream
   # Include Redstream::Model in your model to stream the model's updates via
   # redis streams.
@@ -15,7 +14,7 @@ module Redstream
   module Model
     def self.included(base)
       base.extend(ClassMethods)
-    end 
+    end
 
     module ClassMethods
       # Adds after_save, after_touch, after_destroy and, most importantly,
@@ -34,7 +33,7 @@ module Redstream
         after_touch { |object| producer.delay(object) }
         after_destroy { |object| producer.delay(object) }
         after_commit { |object| producer.queue(object) if object.saved_changes.present? }
-      end 
+      end
 
       def redstream_name
         name.pluralize.underscore
@@ -52,6 +51,5 @@ module Redstream
     def redstream_payload
       { id: id }
     end
-  end 
+  end
 end
-

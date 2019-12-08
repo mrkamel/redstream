@@ -1,4 +1,3 @@
-
 module Redstream
   # The Redstream::Delayer class is responsible for reading messages from
   # special delay streams which are used to fix inconsistencies resulting from
@@ -68,7 +67,7 @@ module Redstream
 
         deliver
       end
-    rescue => e
+    rescue StandardError => e
       @logger.error e
 
       sleep 5
@@ -97,4 +96,3 @@ module Redstream
     end
   end
 end
-

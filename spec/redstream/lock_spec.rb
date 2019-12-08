@@ -1,4 +1,3 @@
-
 require File.expand_path("../spec_helper", __dir__)
 
 RSpec.describe Redstream::Lock do
@@ -7,7 +6,7 @@ RSpec.describe Redstream::Lock do
       lock_results = Concurrent::Array.new
       calls = Concurrent::AtomicFixnum.new(0)
 
-      threads = Array.new(2) do |i|
+      threads = Array.new(2) do |_i|
         Thread.new do
           lock_results << Redstream::Lock.new(name: "lock").acquire do
             calls.increment
@@ -65,4 +64,3 @@ RSpec.describe Redstream::Lock do
     end
   end
 end
-

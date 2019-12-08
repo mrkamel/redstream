@@ -1,4 +1,3 @@
-
 require File.expand_path("../spec_helper", __dir__)
 
 RSpec.describe Redstream::Consumer do
@@ -6,7 +5,7 @@ RSpec.describe Redstream::Consumer do
     it "doesn't call the block without messages" do
       called = false
 
-      Redstream::Consumer.new(name: "consumer", stream_name: "products", batch_size: 5).run_once do |batch|
+      Redstream::Consumer.new(name: "consumer", stream_name: "products", batch_size: 5).run_once do |_batch|
         called = true
       end
 
@@ -18,9 +17,9 @@ RSpec.describe Redstream::Consumer do
 
       calls = Concurrent::AtomicFixnum.new(0)
 
-      threads = Array.new(2) do |i|
+      threads = Array.new(2) do |_i|
         Thread.new do
-          Redstream::Consumer.new(name: "consumer", stream_name: "products", batch_size: 5).run_once do |batch|
+          Redstream::Consumer.new(name: "consumer", stream_name: "products", batch_size: 5).run_once do |_batch|
             calls.increment
 
             sleep 1
@@ -55,7 +54,7 @@ RSpec.describe Redstream::Consumer do
     end
 
     it "yields messages in batches" do
-      products = create_list(:product, 15)
+      create_list(:product, 15)
 
       consumer = Redstream::Consumer.new(name: "consumer", stream_name: "products", batch_size: 10)
 
@@ -87,4 +86,3 @@ RSpec.describe Redstream::Consumer do
     end
   end
 end
-

@@ -1,4 +1,3 @@
-
 require "securerandom"
 
 module Redstream
@@ -55,7 +54,7 @@ module Redstream
     end
 
     def get_lock
-      @get_lock_script =<<-EOF
+      @get_lock_script = <<~GET_LOCK_SCRIPT
         local lock_key_name, id = ARGV[1], ARGV[2]
 
         local cur = redis.call('get', lock_key_name)
@@ -71,10 +70,9 @@ module Redstream
         end
 
         return false
-      EOF
+      GET_LOCK_SCRIPT
 
       Redstream.connection_pool.with { |redis| redis.eval(@get_lock_script, argv: [Redstream.lock_key_name(@name), @id]) }
     end
   end
 end
-

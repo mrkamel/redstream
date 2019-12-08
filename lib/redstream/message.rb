@@ -1,4 +1,3 @@
-
 module Redstream
   # The Redstream::Message class wraps a raw redis stream message to allow hash
   # and id/offset access as well as convenient parsing of the json payload.
@@ -49,4 +48,3 @@ module Redstream
     end
   end
 end
-

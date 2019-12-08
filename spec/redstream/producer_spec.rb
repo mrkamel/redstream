@@ -1,4 +1,3 @@
-
 require File.expand_path("../spec_helper", __dir__)
 
 RSpec.describe Redstream::Producer do
@@ -66,7 +65,7 @@ RSpec.describe Redstream::Producer do
     end
 
     it "should resepect wait for delay" do
-      product = create(:product)
+      create(:product)
 
       stream_key_name = Redstream.stream_key_name("products.delay")
 
@@ -76,4 +75,3 @@ RSpec.describe Redstream::Producer do
     end
   end
 end
-

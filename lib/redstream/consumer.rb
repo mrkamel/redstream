@@ -1,4 +1,3 @@
-
 require "thread"
 
 module Redstream
@@ -92,7 +91,7 @@ module Redstream
       end
 
       sleep(5) unless got_lock
-    rescue => e
+    rescue StandardError => e
       @logger.error e
 
       sleep 5
@@ -112,4 +111,3 @@ module Redstream
     end
   end
 end
-

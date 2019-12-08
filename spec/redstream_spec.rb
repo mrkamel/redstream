@@ -1,4 +1,3 @@
-
 require File.expand_path("spec_helper", __dir__)
 
 RSpec.describe Redstream do
@@ -35,7 +34,7 @@ RSpec.describe Redstream do
     it "returns the stream's max id" do
       expect(Redstream.max_stream_id("products")).to be_nil
 
-      id1 = redis.xadd("redstream:stream:products", key: "value")
+      _id1 = redis.xadd("redstream:stream:products", key: "value")
       id2 = redis.xadd("redstream:stream:products", key: "value")
 
       expect(Redstream.max_stream_id("products")).to eq(id2)
@@ -46,7 +45,7 @@ RSpec.describe Redstream do
     it "returns the consumer's max id" do
       expect(Redstream.max_consumer_id(stream_name: "products", consumer_name: "consumer")).to be_nil
 
-      id1 = redis.xadd("redstream:stream:products", key: "value")
+      _id1 = redis.xadd("redstream:stream:products", key: "value")
       id2 = redis.xadd("redstream:stream:products", key: "value")
 
       Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once do |messages|
@@ -114,4 +113,3 @@ RSpec.describe Redstream do
     end
   end
 end
-

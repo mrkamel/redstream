@@ -1,4 +1,3 @@
-
 require "active_support/inflector"
 require "connection_pool"
 require "redis"
@@ -69,7 +68,7 @@ module Redstream
     connection_pool.with do |redis|
       message = redis.xrevrange(stream_key_name(stream_name), "+", "-", count: 1).first
 
-      return unless message
+      return nil unless message
 
       message[0]
     end
@@ -131,4 +130,3 @@ module Redstream
     [namespace, "redstream"].compact.join(":")
   end
 end
-

@@ -1,4 +1,3 @@
-
 require File.expand_path("../spec_helper", __dir__)
 
 RSpec.describe Redstream::Delayer do
@@ -50,4 +49,3 @@ RSpec.describe Redstream::Delayer do
     end
   end
 end
-

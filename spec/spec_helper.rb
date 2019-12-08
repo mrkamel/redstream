@@ -1,4 +1,3 @@
-
 require File.expand_path("../lib/redstream", __dir__)
 require "active_record"
 require "factory_bot"
@@ -62,5 +61,3 @@ RSpec.configure do |config|
     Redis.new.flushdb
   end
 end
-
-
