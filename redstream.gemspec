@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "rspec-instafail"
   spec.add_development_dependency "rubocop"
-  spec.add_development_dependency "sqlite3", "1.3.13"
+  spec.add_development_dependency "sqlite3"
   spec.add_development_dependency "timecop"
 
   spec.add_dependency "activesupport"
