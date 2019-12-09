@@ -30,6 +30,16 @@ RSpec.describe Redstream do
     end
   end
 
+  describe ".stream_size" do
+    it "returns the stream's size" do
+      expect(Redstream.stream_size("products")).to eq(0)
+
+      redis.xadd("restream:stream:products", key: "value")
+
+      expect(Redstream.stream_size("products")).to eq(1)
+    end
+  end
+
   describe ".max_stream_id" do
     it "returns the stream's max id" do
       expect(Redstream.max_stream_id("products")).to be_nil

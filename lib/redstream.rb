@@ -58,6 +58,17 @@ module Redstream
     @namespace
   end
 
+  # Returns the length of the specified stream.
+  #
+  # @param stream_name [String] The stream name
+  # @return [Integer] The length of the stream
+
+  def self.stream_size(stream_name)
+    connection_pool.with do |redis|
+      redis.xlen(stream_key_name(stream_name))
+    end
+  end
+
   # Returns the max id of the specified stream, i.e. the id of the
   # last/newest message added. Returns nil for empty streams.
   #
