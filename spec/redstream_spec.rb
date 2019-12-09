@@ -34,7 +34,7 @@ RSpec.describe Redstream do
     it "returns the stream's size" do
       expect(Redstream.stream_size("products")).to eq(0)
 
-      redis.xadd("restream:stream:products", key: "value")
+      redis.xadd("redstream:stream:products", key: "value")
 
       expect(Redstream.stream_size("products")).to eq(1)
     end
