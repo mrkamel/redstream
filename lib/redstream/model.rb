@@ -32,7 +32,8 @@ module Redstream
         after_save { |object| producer.delay(object) if object.saved_changes.present? }
         after_touch { |object| producer.delay(object) }
         after_destroy { |object| producer.delay(object) }
-        after_commit { |object| producer.queue(object) if object.saved_changes.present? }
+        after_commit(on: [:create, :update]) { |object| producer.queue(object) if object.saved_changes.present? }
+        after_commit(on: :destroy) { |object| producer.queue(object) }
       end
 
       def redstream_name
