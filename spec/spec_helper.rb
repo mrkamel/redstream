@@ -17,7 +17,7 @@ ActiveRecord::Base.connection.execute "DROP TABLE IF EXISTS products"
 
 ActiveRecord::Base.connection.create_table :products do |t|
   t.string :title
-  t.timestamps
+  t.timestamps null: false
 end
 
 class Product < ActiveRecord::Base
