@@ -22,7 +22,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "concurrent-ruby"
   spec.add_development_dependency "database_cleaner"
   spec.add_development_dependency "factory_bot"
-  spec.add_development_dependency "mocha"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "rspec-instafail"

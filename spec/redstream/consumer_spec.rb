@@ -80,9 +80,45 @@ RSpec.describe Redstream::Consumer do
 
       all_messages = redis.xrange(Redstream.stream_key_name("products"), "-", "+")
 
-      Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once {}
+      Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once do
+        # nothing
+      end
 
       expect(redis.get(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"))).to eq(all_messages.last[0])
+    end
+
+    it "logs an error and sleeps when e.g. redis can not be reached" do
+      allow_any_instance_of(Redis).to receive(:get).and_raise(Redis::ConnectionError)
+
+      logger = Logger.new("/dev/null")
+      allow(logger).to receive(:error)
+
+      consumer = Redstream::Consumer.new(name: "consumer", stream_name: "products", logger: logger)
+      allow(consumer).to receive(:sleep)
+
+      consumer.run_once do
+        # nothing
+      end
+
+      expect(logger).to have_received(:error).with(Redis::ConnectionError)
+      expect(consumer).to have_received(:sleep).with(5)
+    end
+
+    it "logs an error and sleeps when the next offset is invalid" do
+      allow_any_instance_of(Redis).to receive(:xread).and_return("redstream:stream:products" => [[nil, { "payload" => JSON.generate("id" => 1) }]])
+
+      logger = Logger.new("/dev/null")
+      allow(logger).to receive(:error)
+
+      consumer = Redstream::Consumer.new(name: "consumer", stream_name: "products", logger: logger)
+      allow(consumer).to receive(:sleep)
+
+      consumer.run_once do
+        # nothing
+      end
+
+      expect(logger).to have_received(:error).with(Redstream::InvalidMessageID)
+      expect(consumer).to have_received(:sleep).with(5)
     end
   end
 end

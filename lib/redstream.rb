@@ -15,6 +15,8 @@ require "redstream/model"
 require "redstream/trimmer"
 
 module Redstream
+  class InvalidMessageID < StandardError; end
+
   # Redstream uses the connection_pool gem to pool redis connections. In case
   # you have a distributed redis setup (sentinel/cluster) or the default pool
   # size doesn't match your requirements, then you must specify the connection

@@ -36,10 +36,9 @@ module Redstream
 
     def keep_lock(&block)
       stop = false
-      mutex = Mutex.new
 
       Thread.new do
-        until mutex.synchronize { stop }
+        until stop
           Redstream.connection_pool.with { |redis| redis.expire(Redstream.lock_key_name(@name), 5) }
 
           sleep 3
@@ -48,9 +47,7 @@ module Redstream
 
       block.call
     ensure
-      mutex.synchronize do
-        stop = true
-      end
+      stop = true
     end
 
     def get_lock

@@ -56,7 +56,7 @@ module Redstream
 
               deliver
 
-              @consumer.commit id
+              @consumer.commit(id)
             end
 
             sleep(seconds_to_sleep + 1)
@@ -68,11 +68,9 @@ module Redstream
         deliver
       end
     rescue StandardError => e
-      @logger.error e
+      @logger.error(e)
 
-      sleep 5
-
-      retry
+      sleep(5)
     end
 
     private

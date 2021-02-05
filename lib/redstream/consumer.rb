@@ -77,26 +77,24 @@ module Redstream
 
         return if response.nil? || response[stream_key_name].nil? || response[stream_key_name].empty?
 
+        offset = response[stream_key_name].last[0]
+
+        raise(InvalidMessageID, "Invalid message ID #{offset.inspect}") unless offset
+
         messages = response[stream_key_name].map do |raw_message|
           Message.new(raw_message)
         end
 
         block.call(messages)
 
-        offset = response[stream_key_name].last[0]
-
-        return unless offset
-
-        commit offset
+        commit(offset)
       end
 
       sleep(5) unless got_lock
     rescue StandardError => e
-      @logger.error e
+      @logger.error(e)
 
-      sleep 5
-
-      retry
+      sleep(5)
     end
 
     # @api private

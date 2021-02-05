@@ -1,6 +1,9 @@
 AllCops:
   NewCops: enable
 
+Gemspec/RequiredRubyVersion:
+  Enabled: false
+
 Lint/AmbiguousBlockAssociation:
   Enabled: false
 

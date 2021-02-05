@@ -13,7 +13,7 @@ RSpec.describe Redstream::Delayer do
       expect(redis.xrange(Redstream.stream_key_name("target")).last[1]).to eq("payload" => JSON.dump(value: "message"))
     end
 
-    it "delivers and commit before falling asleep" do
+    it "delivers and commits before falling asleep" do
       redis.xadd Redstream.stream_key_name("target.delay"), payload: JSON.dump(value: "message")
       sleep 3
       redis.xadd Redstream.stream_key_name("target.delay"), payload: JSON.dump(value: "message")
@@ -46,6 +46,23 @@ RSpec.describe Redstream::Delayer do
       thread.join
 
       expect(redis.xlen(Redstream.stream_key_name("target"))).to eq(1)
+    end
+
+    it "logs an error and sleeps when e.g. redis can not be reached" do
+      redis.xadd Redstream.stream_key_name("target.delay"), payload: JSON.dump(value: "message")
+
+      allow_any_instance_of(Redis).to receive(:xadd).and_raise(Redis::ConnectionError)
+
+      logger = Logger.new("/dev/null")
+      allow(logger).to receive(:error)
+
+      delayer = Redstream::Delayer.new(stream_name: "target", delay: 0, logger: logger)
+      allow(delayer).to receive(:sleep)
+
+      delayer.run_once
+
+      expect(logger).to have_received(:error).with(Redis::ConnectionError)
+      expect(delayer).to have_received(:sleep).with(5)
     end
   end
 end
