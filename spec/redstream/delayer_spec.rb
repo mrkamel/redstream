@@ -48,21 +48,14 @@ RSpec.describe Redstream::Delayer do
       expect(redis.xlen(Redstream.stream_key_name("target"))).to eq(1)
     end
 
-    it "logs an error and sleeps when e.g. redis can not be reached" do
+    it "does not raise any error when e.g. redis can not be reached" do
       redis.xadd Redstream.stream_key_name("target.delay"), payload: JSON.dump(value: "message")
 
       allow_any_instance_of(Redis).to receive(:xadd).and_raise(Redis::ConnectionError)
 
-      logger = Logger.new("/dev/null")
-      allow(logger).to receive(:error)
+      delayer = Redstream::Delayer.new(stream_name: "target", delay: 0)
 
-      delayer = Redstream::Delayer.new(stream_name: "target", delay: 0, logger: logger)
-      allow(delayer).to receive(:sleep)
-
-      delayer.run_once
-
-      expect(logger).to have_received(:error).with(Redis::ConnectionError)
-      expect(delayer).to have_received(:sleep).with(5)
+      expect { delayer.run_once }.not_to raise_error
     end
   end
 end

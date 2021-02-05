@@ -67,10 +67,6 @@ module Redstream
 
         deliver
       end
-    rescue StandardError => e
-      @logger.error(e)
-
-      sleep(5)
     end
 
     private

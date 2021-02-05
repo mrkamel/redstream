@@ -23,8 +23,26 @@ RSpec.describe Redstream::Trimmer do
 
     it "sleeps for the specified time if there's nothing to trim" do
       trimmer = Redstream::Trimmer.new(interval: 1, stream_name: "default", consumer_names: ["unknown_consumer"])
-      allow(trimmer).to receive(:sleep).with(1)
+      allow(trimmer).to receive(:sleep)
+
       trimmer.run_once
+
+      expect(trimmer).to have_received(:sleep).with(1)
+    end
+
+    it "logs an error and sleeps when e.g. redis can not be reached" do
+      allow_any_instance_of(Redis).to receive(:mget).and_raise(Redis::ConnectionError)
+
+      logger = Logger.new("/dev/null")
+      allow(logger).to receive(:error)
+
+      trimmer = Redstream::Trimmer.new(interval: 1, stream_name: "default", consumer_names: ["unknown_consumer"], logger: logger)
+      allow(trimmer).to receive(:sleep)
+
+      trimmer.run_once
+
+      expect(logger).to have_received(:error).with(Redis::ConnectionError)
+      expect(trimmer).to have_received(:sleep).with(5)
     end
   end
 end
