@@ -35,10 +35,10 @@ module Redstream
     private
 
     def keep_lock(&block)
-      stop = false
+      stopped = false
 
       Thread.new do
-        until stop
+        until stopped
           Redstream.connection_pool.with { |redis| redis.expire(Redstream.lock_key_name(@name), 5) }
 
           sleep 3
@@ -47,7 +47,7 @@ module Redstream
 
       block.call
     ensure
-      stop = true
+      stopped = true
     end
 
     def get_lock
