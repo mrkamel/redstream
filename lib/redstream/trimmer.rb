@@ -82,8 +82,6 @@ module Redstream
       @logger.error e
 
       sleep 5
-
-      retry
     end
   end
 end

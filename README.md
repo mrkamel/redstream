@@ -4,7 +4,7 @@
 **Using redis streams to keep your primary database in sync with secondary
 datastores (e.g. elasticsearch).**
 
-[![Build Status](https://secure.travis-ci.org/mrkamel/redstream.png?branch=master)](http://travis-ci.org/mrkamel/redstream)
+[![Build Status](https://github.com/mrkamel/redstream/workflows/test/badge.svg?branch=master)](https://github.com/mrkamel/redstream/actions?query=workflow%3Atest)
 
 ## Installation
 

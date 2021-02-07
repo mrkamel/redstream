@@ -4,12 +4,7 @@ require "factory_bot"
 require "database_cleaner"
 require "timecop"
 require "concurrent"
-require "mocha"
 require "rspec/instafail"
-
-RSpec.configure do |config|
-  config.mock_with :mocha
-end
 
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "/tmp/redstream.sqlite3")
 

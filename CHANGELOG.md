@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.2.0
+* Add commit safety check before yielding messages
+* No more retry in `run_once`
+
 ## v0.1.1
 * Fix missing queue message in `after_commit on: :destroy`
 
