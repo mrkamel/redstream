@@ -77,9 +77,9 @@ module Redstream
 
         return if response.nil? || response[stream_key_name].nil? || response[stream_key_name].empty?
 
-        offset = response[stream_key_name].last[0]
+        new_offset = response[stream_key_name].last[0]
 
-        raise(InvalidMessageID, "Invalid message ID #{offset.inspect}") unless offset
+        raise(InvalidMessageID, "Invalid message ID #{new_offset.inspect}") unless new_offset
 
         messages = response[stream_key_name].map do |raw_message|
           Message.new(raw_message)
@@ -87,7 +87,7 @@ module Redstream
 
         block.call(messages)
 
-        commit(offset)
+        commit(new_offset)
       end
 
       sleep(5) unless got_lock
