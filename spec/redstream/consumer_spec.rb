@@ -80,7 +80,9 @@ RSpec.describe Redstream::Consumer do
 
       all_messages = redis.xrange(Redstream.stream_key_name("products"), "-", "+")
 
-      Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once {}
+      Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once do
+        # nothing
+      end
 
       expect(redis.get(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"))).to eq(all_messages.last[0])
     end
