@@ -86,9 +86,9 @@ end
 More concretely, `after_save`, `after_touch` and `after_destroy` only write
 "delay" messages to an additional redis stream. Delay message are like any
 other messages, but they get processed by a `Redstream::Delayer` and the
-`Delayer`will wait for some (configurable) delay/time before processing them.
+`Delayer` will wait for some (configurable) delay/time before processing them.
 As the `Delayer` is neccessary to fix inconsistencies, the delay must be at
-least as long as your maxiumum database transaction time. Contrary,
+least as long as your maximum database transaction time. Contrary,
 `after_commit` writes messages to a redis stream from which the messages can
 be fetched immediately to keep the secondary datastores updated in
 near-realtime. The reasoning of all this is simple: usually, i.e. by using only
