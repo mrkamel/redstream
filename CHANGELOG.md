@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v0.2.0
+* Delete delay messages after queue messages are sent
+
 ## v0.1.1
 * Fix missing queue message in `after_commit on: :destroy`
 
