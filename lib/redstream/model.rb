@@ -19,7 +19,6 @@ module Redstream
     end
 
     module ClassMethods
-
       # Adds after_save, after_touch, after_destroy and, most importantly,
       # after_commit callbacks. after_save, after_touch and after_destroy write
       # a delay message to a delay stream. The delay messages are exactly like
