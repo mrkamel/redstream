@@ -66,11 +66,11 @@ RSpec.describe Redstream::Producer do
 
       other_id = producer.delay(create(:product))
 
-      producer.bulk_queue(Product.all) do
+      producer.bulk_queue(products) do
         expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(2)
       end
 
-      expect(redis.xrange(Redstream.stream_key_name("products.delay"), '-', '+').map(&:first)).to eq([other_id])
+      expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+").map(&:first)).to eq([other_id])
     end
   end
 
@@ -111,7 +111,7 @@ RSpec.describe Redstream::Producer do
       ids = producer.bulk_delay(products)
       producer.bulk_delete(products, ids)
 
-      expect(redis.xrange(Redstream.stream_key_name("products.delay"), '-', '+').map(&:first)).to eq([other_id])
+      expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+").map(&:first)).to eq([other_id])
     end
   end
 end
