@@ -65,7 +65,11 @@ RSpec.describe Redstream::Producer do
 
       stream_key_name = Redstream.stream_key_name("products")
 
-      expect { Redstream::Producer.new.bulk(Product.all) {} }.to change { redis.xlen(stream_key_name) }.by(2)
+      expect do
+        Redstream::Producer.new.bulk(Product.all) do
+          # nothing
+        end
+      end.to change { redis.xlen(stream_key_name) }.by(2)
 
       messages = redis.xrange(stream_key_name, "-", "+").last(2).map { |message| message[1] }
 
