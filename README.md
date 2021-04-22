@@ -97,7 +97,9 @@ any errors occurring in between `after_save` and `after_commit` result in
 inconsistencies between your primary and secondary datastore. By using these
 kinds of "delay" messages triggered by `after_save` and fetched after e.g. 5
 minutes, errors occurring in between `after_save` and `after_commit` can be
-fixed when the delay message get processed.
+fixed when the delay message get processed. Please note that redstream deletes
+delay messages after the messages for immediate retrieval have been
+successfully sent, such that messages will not be processed twice, usually.
 
 Any messages are fetched in batches, such that e.g. elasticsearch can be
 updated using its bulk API. For instance, depending on which elasticsearch ruby
