@@ -7,7 +7,7 @@ RSpec.describe Redstream::Producer do
 
       stream_key_name = Redstream.stream_key_name("products")
 
-      expect { Redstream::Producer.new.queue(product, delay_message_id: nil) }.to change { redis.xlen(stream_key_name) }.by(1)
+      expect { Redstream::Producer.new.queue(product) }.to change { redis.xlen(stream_key_name) }.by(1)
       expect(redis.xrange(stream_key_name, "-", "+").last[1]).to eq("payload" => JSON.dump(product.redstream_payload))
     end
 
@@ -99,7 +99,7 @@ RSpec.describe Redstream::Producer do
 
       stream_key_name = Redstream.stream_key_name("products")
 
-      expect { Redstream::Producer.new.bulk_queue(Product.all, delay_message_ids: nil) }.to change { redis.xlen(stream_key_name) }.by(2)
+      expect { Redstream::Producer.new.bulk_queue(Product.all) }.to change { redis.xlen(stream_key_name) }.by(2)
 
       messages = redis.xrange(stream_key_name, "-", "+").last(2).map { |message| message[1] }
 

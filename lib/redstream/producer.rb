@@ -90,8 +90,9 @@ module Redstream
     # Writes messages to a stream in redis for immediate retrieval.
     #
     # @param records [#to_a] The object/objects that will be updated deleted
+    # @param delay_message_ids [#to_a] The delay message ids to delete
 
-    def bulk_queue(records, delay_message_ids:)
+    def bulk_queue(records, delay_message_ids: nil)
       records.each_with_index.each_slice(250) do |slice|
         Redstream.connection_pool.with do |redis|
           redis.pipelined do
@@ -127,8 +128,9 @@ module Redstream
     # Writes a single message to a stream in redis for immediate retrieval.
     #
     # @param object The object hat will be updated, deleted, etc.
+    # @param delay_message_id The delay message id to delete
 
-    def queue(object, delay_message_id:)
+    def queue(object, delay_message_id: nil)
       Redstream.connection_pool.with do |redis|
         redis.pipelined do
           redis.xadd(Redstream.stream_key_name(stream_name(object)), payload: JSON.dump(object.redstream_payload))

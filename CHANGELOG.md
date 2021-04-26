@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v0.4.0
+* Make delay message id params in queue methods optional
+
 ## v0.3.0
 * Pipeline deletion of delay messages
 
