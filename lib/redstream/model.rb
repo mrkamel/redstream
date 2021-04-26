@@ -37,22 +37,14 @@ module Redstream
 
         after_commit(on: [:create, :update]) do |object|
           if object.saved_changes.present?
-            producer.queue(object)
-
-            if id = instance_variable_get(IVAR_DELAY_MESSAGE_ID)
-              producer.delete(object, id)
-              remove_instance_variable(IVAR_DELAY_MESSAGE_ID)
-            end
+            producer.queue(object, delay_message_id: instance_variable_get(IVAR_DELAY_MESSAGE_ID))
+            instance_variable_set(IVAR_DELAY_MESSAGE_ID, nil)
           end
         end
 
         after_commit(on: :destroy) do |object|
-          producer.queue(object)
-
-          if id = instance_variable_get(IVAR_DELAY_MESSAGE_ID)
-            producer.delete(object, id)
-            remove_instance_variable(IVAR_DELAY_MESSAGE_ID)
-          end
+          producer.queue(object, delay_message_id: instance_variable_get(IVAR_DELAY_MESSAGE_ID))
+          instance_variable_set(IVAR_DELAY_MESSAGE_ID, nil)
         end
       end
 

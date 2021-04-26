@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v0.3.0
+* Pipeline deletion of delay messages
+
 ## v0.2.0
 * Delete delay messages after queue messages are sent
 
