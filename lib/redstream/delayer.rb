@@ -85,11 +85,11 @@ module Redstream
       Redstream.connection_pool.with do |redis|
         redis.pipelined do
           @batch.each do |message|
-            redis.xadd Redstream.stream_key_name(@stream_name), payload: message.fields["payload"]
+            redis.xadd(Redstream.stream_key_name(@stream_name), { payload: message.fields["payload"] })
           end
         end
 
-        redis.xdel Redstream.stream_key_name("#{@stream_name}.delay"), @batch.map(&:message_id)
+        redis.xdel(Redstream.stream_key_name("#{@stream_name}.delay"), @batch.map(&:message_id))
       end
 
       @batch = []
