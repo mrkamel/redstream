@@ -48,7 +48,7 @@ module Redstream
     def run_once
       @consumer.run_once do |messages|
         messages.each do |message|
-          seconds_to_sleep = message.message_id.to_f / 1_000 + @delay.to_f - Time.now.to_f
+          seconds_to_sleep = (message.message_id.to_f / 1_000) + @delay.to_f - Time.now.to_f
 
           if seconds_to_sleep > 0
             if @batch.size > 0
