@@ -4,11 +4,11 @@ RSpec.describe Redstream::Trimmer do
   describe "#run_once" do
     it "trims a stream to the minimum committed id" do
       ids = Array.new(4) do |i|
-        redis.xadd Redstream.stream_key_name("default"), payload: JSON.dump(value: "message#{i}")
+        redis.xadd(Redstream.stream_key_name("default"), { payload: JSON.dump(value: "message#{i}") })
       end
 
-      redis.set Redstream.offset_key_name(stream_name: "default", consumer_name: "consumer1"), ids[1]
-      redis.set Redstream.offset_key_name(stream_name: "default", consumer_name: "consumer2"), ids[2]
+      redis.set(Redstream.offset_key_name(stream_name: "default", consumer_name: "consumer1"), ids[1])
+      redis.set(Redstream.offset_key_name(stream_name: "default", consumer_name: "consumer2"), ids[2])
 
       trimmer = Redstream::Trimmer.new(
         interval: 5,

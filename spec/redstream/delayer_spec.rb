@@ -3,7 +3,7 @@ require File.expand_path("../spec_helper", __dir__)
 RSpec.describe Redstream::Delayer do
   describe "#run_once" do
     it "copies expired messages to their target streams" do
-      redis.xadd Redstream.stream_key_name("target.delay"), payload: JSON.dump(value: "message")
+      redis.xadd(Redstream.stream_key_name("target.delay"), { payload: JSON.dump(value: "message") })
 
       expect(redis.xlen(Redstream.stream_key_name("target"))).to eq(0)
 
@@ -14,9 +14,9 @@ RSpec.describe Redstream::Delayer do
     end
 
     it "delivers and commit before falling asleep" do
-      redis.xadd Redstream.stream_key_name("target.delay"), payload: JSON.dump(value: "message")
+      redis.xadd(Redstream.stream_key_name("target.delay"), { payload: JSON.dump(value: "message") })
       sleep 3
-      redis.xadd Redstream.stream_key_name("target.delay"), payload: JSON.dump(value: "message")
+      redis.xadd(Redstream.stream_key_name("target.delay"), { payload: JSON.dump(value: "message") })
 
       thread = Thread.new do
         Redstream::Delayer.new(stream_name: "target", delay: 1).run_once
@@ -33,7 +33,7 @@ RSpec.describe Redstream::Delayer do
     end
 
     it "does not copy not yet expired messages" do
-      redis.xadd Redstream.stream_key_name("target.delay"), payload: JSON.dump(value: "message")
+      redis.xadd(Redstream.stream_key_name("target.delay"), { payload: JSON.dump(value: "message") })
 
       thread = Thread.new do
         Redstream::Delayer.new(stream_name: "target", delay: 2).run_once

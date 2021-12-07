@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v0.4.1
+* Fix keyword argument usage of redis 4.5.1 in ruby 3
+
 ## v0.4.0
 * Make delay message id params in queue methods optional
 
