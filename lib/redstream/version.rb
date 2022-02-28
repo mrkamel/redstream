@@ -1,3 +1,3 @@
 module Redstream
-  VERSION = "0.4.2"
+  VERSION = "0.4.3"
 end
