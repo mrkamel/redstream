@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v0.4.3
+* Change gemspec to support older redis versions again
+
 ## v0.4.2
 * Fix pipelining with redis-rb 4.6.0
 

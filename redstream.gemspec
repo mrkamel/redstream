@@ -33,5 +33,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "activesupport"
   spec.add_dependency "connection_pool"
   spec.add_dependency "json"
-  spec.add_dependency "redis", ">= 4.6.0"
+  spec.add_dependency "redis", ">= 4.1.0"
 end
