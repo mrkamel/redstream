@@ -83,9 +83,9 @@ module Redstream
       @logger.debug "Delayed #{@batch.size} messages for #{@delay.to_f} seconds on stream #{@stream_name}"
 
       Redstream.connection_pool.with do |redis|
-        redis.pipelined do
+        redis.pipelined do |pipeline|
           @batch.each do |message|
-            redis.xadd(Redstream.stream_key_name(@stream_name), { payload: message.fields["payload"] })
+            pipeline.xadd(Redstream.stream_key_name(@stream_name), { payload: message.fields["payload"] })
           end
         end
 
