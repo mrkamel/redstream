@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v0.4.2
+* Fix pipelining with redis-rb 4.6.0
+
 ## v0.4.1
 * Fix keyword argument usage of redis 4.5.1 in ruby 3
 
