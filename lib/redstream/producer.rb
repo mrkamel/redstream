@@ -70,9 +70,9 @@ module Redstream
     def bulk_delay(records)
       res = records.each_slice(250).flat_map do |slice|
         Redstream.connection_pool.with do |redis|
-          redis.pipelined do
+          redis.pipelined do |pipeline|
             slice.each do |object|
-              redis.xadd(Redstream.stream_key_name("#{stream_name(object)}.delay"), { payload: JSON.dump(object.redstream_payload) })
+              pipeline.xadd(Redstream.stream_key_name("#{stream_name(object)}.delay"), { payload: JSON.dump(object.redstream_payload) })
             end
           end
         end
@@ -95,10 +95,10 @@ module Redstream
     def bulk_queue(records, delay_message_ids: nil)
       records.each_with_index.each_slice(250) do |slice|
         Redstream.connection_pool.with do |redis|
-          redis.pipelined do
+          redis.pipelined do |pipeline|
             slice.each do |object, index|
-              redis.xadd(Redstream.stream_key_name(stream_name(object)), { payload: JSON.dump(object.redstream_payload) })
-              redis.xdel(Redstream.stream_key_name("#{stream_name(object)}.delay"), delay_message_ids[index]) if delay_message_ids
+              pipeline.xadd(Redstream.stream_key_name(stream_name(object)), { payload: JSON.dump(object.redstream_payload) })
+              pipeline.xdel(Redstream.stream_key_name("#{stream_name(object)}.delay"), delay_message_ids[index]) if delay_message_ids
             end
           end
         end
@@ -132,9 +132,9 @@ module Redstream
 
     def queue(object, delay_message_id: nil)
       Redstream.connection_pool.with do |redis|
-        redis.pipelined do
-          redis.xadd(Redstream.stream_key_name(stream_name(object)), { payload: JSON.dump(object.redstream_payload) })
-          redis.xdel(Redstream.stream_key_name("#{stream_name(object)}.delay"), delay_message_id) if delay_message_id
+        redis.pipelined do |pipeline|
+          pipeline.xadd(Redstream.stream_key_name(stream_name(object)), { payload: JSON.dump(object.redstream_payload) })
+          pipeline.xdel(Redstream.stream_key_name("#{stream_name(object)}.delay"), delay_message_id) if delay_message_id
         end
       end
 
