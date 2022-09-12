@@ -92,10 +92,10 @@ module Redstream
     # @param records [#to_a] The object/objects that will be updated deleted
 
     def bulk_queue(records)
-      records.each_with_index.each_slice(250) do |slice|
+      records.each_slice(250) do |slice|
         Redstream.connection_pool.with do |redis|
           redis.pipelined do |pipeline|
-            slice.each do |object, index|
+            slice.each do |object|
               pipeline.xadd(Redstream.stream_key_name(stream_name(object)), { payload: JSON.dump(object.redstream_payload) })
             end
           end
