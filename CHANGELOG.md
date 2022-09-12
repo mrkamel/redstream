@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v0.4.4
+* Remove deletion of delay messages after queues messages are sent from `.bulk`
+
 ## v0.4.3
 * Change gemspec to support older redis versions again
 

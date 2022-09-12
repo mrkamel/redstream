@@ -78,19 +78,6 @@ RSpec.describe Redstream::Producer do
         { "payload" => JSON.dump(products[1].redstream_payload) }
       ])
     end
-
-    it "deletes the delay messages after the queue messages have been sent" do
-      products = create_list(:product, 2)
-      producer = Redstream::Producer.new
-
-      other_delay_message_id = producer.delay(create(:product))
-
-      producer.bulk(products) do
-        expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(3)
-      end
-
-      expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+").map(&:first)).to eq([other_delay_message_id])
-    end
   end
 
   describe "#bulk_queue" do
@@ -107,18 +94,6 @@ RSpec.describe Redstream::Producer do
         { "payload" => JSON.dump(products[0].redstream_payload) },
         { "payload" => JSON.dump(products[1].redstream_payload) }
       ])
-    end
-
-    it "deletes the delay messages after the queue messages have been sent" do
-      products = create_list(:product, 2)
-      producer = Redstream::Producer.new
-
-      delay_message_ids = producer.bulk_delay(products)
-      other_delay_message_id = producer.delay(create(:product))
-
-      producer.bulk_queue(products, delay_message_ids: delay_message_ids)
-
-      expect(redis.xrange(Redstream.stream_key_name("products.delay"), "-", "+").map(&:first)).to eq([other_delay_message_id])
     end
   end
 

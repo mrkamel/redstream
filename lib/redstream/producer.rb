@@ -52,11 +52,11 @@ module Redstream
     def bulk(records)
       records_array = Array(records)
 
-      delay_message_ids = bulk_delay(records_array)
+      bulk_delay(records_array)
 
       yield
 
-      bulk_queue(records_array, delay_message_ids: delay_message_ids)
+      bulk_queue(records_array)
     end
 
     # @api private
@@ -68,7 +68,7 @@ module Redstream
     # @return The redis message ids
 
     def bulk_delay(records)
-      res = records.each_slice(250).flat_map do |slice|
+      records.each_slice(250) do |slice|
         Redstream.connection_pool.with do |redis|
           redis.pipelined do |pipeline|
             slice.each do |object|
@@ -82,7 +82,7 @@ module Redstream
         redis.wait(@wait, 0) if @wait
       end
 
-      res
+      true
     end
 
     # @api private
@@ -90,15 +90,13 @@ module Redstream
     # Writes messages to a stream in redis for immediate retrieval.
     #
     # @param records [#to_a] The object/objects that will be updated deleted
-    # @param delay_message_ids [#to_a] The delay message ids to delete
 
-    def bulk_queue(records, delay_message_ids: nil)
+    def bulk_queue(records)
       records.each_with_index.each_slice(250) do |slice|
         Redstream.connection_pool.with do |redis|
           redis.pipelined do |pipeline|
             slice.each do |object, index|
               pipeline.xadd(Redstream.stream_key_name(stream_name(object)), { payload: JSON.dump(object.redstream_payload) })
-              pipeline.xdel(Redstream.stream_key_name("#{stream_name(object)}.delay"), delay_message_ids[index]) if delay_message_ids
             end
           end
         end
