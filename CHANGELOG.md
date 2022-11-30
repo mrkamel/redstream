@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v0.5.0
+* No longer delete delay messages
+
 ## v0.4.4
 * Remove deletion of delay messages after queues messages are sent from `.bulk`
 

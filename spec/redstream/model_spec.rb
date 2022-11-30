@@ -8,12 +8,6 @@ RSpec.describe Redstream::Model do
       end
     end
 
-    it "assigns the delay message id" do
-      Product.transaction do
-        expect(create(:product).instance_variable_get(Redstream::Model::IVAR_DELAY_MESSAGE_ID)).to be_present
-      end
-    end
-
     it "adds the correct payload for the delay message" do
       Product.transaction do
         product = create(:product)
@@ -24,13 +18,6 @@ RSpec.describe Redstream::Model do
 
     it "adds a queue message after_save on commit" do
       expect { create(:product) }.to change { redis.xlen(Redstream.stream_key_name("products")) }
-    end
-
-    it "deletes the delay message on commit" do
-      product = create(:product)
-
-      expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(0)
-      expect(product.instance_variable_get(Redstream::Model::IVAR_DELAY_MESSAGE_ID)).to be_nil
     end
 
     it "does not add a delay message after_save if there are no changes" do
@@ -55,16 +42,6 @@ RSpec.describe Redstream::Model do
       end
     end
 
-    it "assigns the delay message id" do
-      product = create(:product)
-
-      Product.transaction do
-        product.touch
-
-        expect(product.instance_variable_get(Redstream::Model::IVAR_DELAY_MESSAGE_ID)).to be_present
-      end
-    end
-
     it "sets the correct payload for the delay message" do
       product = create(:product)
 
@@ -80,14 +57,6 @@ RSpec.describe Redstream::Model do
 
       expect { product.touch }.to change { redis.xlen(Redstream.stream_key_name("products")) }
     end
-
-    it "deletes the delay message after touch on commit" do
-      product = create(:product)
-      product.touch
-
-      expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(0)
-      expect(product.instance_variable_get(Redstream::Model::IVAR_DELAY_MESSAGE_ID)).to be_nil
-    end
   end
 
   describe "after_destroy" do
@@ -96,16 +65,6 @@ RSpec.describe Redstream::Model do
 
       Product.transaction do
         expect { product.destroy }.to change { redis.xlen(Redstream.stream_key_name("products.delay")) }
-      end
-    end
-
-    it "assigns the delay message id" do
-      product = create(:product)
-
-      Product.transaction do
-        product.destroy
-
-        expect(product.instance_variable_get(Redstream::Model::IVAR_DELAY_MESSAGE_ID)).to be_present
       end
     end
 
@@ -123,14 +82,6 @@ RSpec.describe Redstream::Model do
       product = create(:product)
 
       expect { product.destroy }.to change { redis.xlen(Redstream.stream_key_name("products")) }.by(1)
-    end
-
-    it "deletes the delay message after destroy on commit" do
-      product = create(:product)
-      product.destroy
-
-      expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(0)
-      expect(product.instance_variable_get(Redstream::Model::IVAR_DELAY_MESSAGE_ID)).to be_nil
     end
   end
 end

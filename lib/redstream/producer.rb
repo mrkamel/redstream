@@ -126,14 +126,10 @@ module Redstream
     # Writes a single message to a stream in redis for immediate retrieval.
     #
     # @param object The object hat will be updated, deleted, etc.
-    # @param delay_message_id The delay message id to delete
 
-    def queue(object, delay_message_id: nil)
+    def queue(object)
       Redstream.connection_pool.with do |redis|
-        redis.pipelined do |pipeline|
-          pipeline.xadd(Redstream.stream_key_name(stream_name(object)), { payload: JSON.dump(object.redstream_payload) })
-          pipeline.xdel(Redstream.stream_key_name("#{stream_name(object)}.delay"), delay_message_id) if delay_message_id
-        end
+        redis.xadd(Redstream.stream_key_name(stream_name(object)), { payload: JSON.dump(object.redstream_payload) })
       end
 
       true

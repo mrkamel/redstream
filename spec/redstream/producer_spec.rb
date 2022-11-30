@@ -10,17 +10,6 @@ RSpec.describe Redstream::Producer do
       expect { Redstream::Producer.new.queue(product) }.to change { redis.xlen(stream_key_name) }.by(1)
       expect(redis.xrange(stream_key_name, "-", "+").last[1]).to eq("payload" => JSON.dump(product.redstream_payload))
     end
-
-    it "deletes the delay message when given" do
-      product = create(:product)
-
-      producer = Redstream::Producer.new
-
-      id = producer.delay(product)
-      producer.queue(product, delay_message_id: id)
-
-      expect(redis.xlen(Redstream.stream_key_name("products.delay"))).to eq(0)
-    end
   end
 
   describe "#delay" do
@@ -48,9 +37,11 @@ RSpec.describe Redstream::Producer do
 
       stream_key_name = Redstream.stream_key_name("products")
 
-      expect(redis.xlen("#{stream_key_name}.delay")).to eq(0)
+      expect(redis.xlen("#{stream_key_name}.delay")).to eq(2)
 
       Redstream::Producer.new.bulk(Product.all) do
+        expect(redis.xlen("#{stream_key_name}.delay")).to eq(4)
+
         messages = redis.xrange("#{stream_key_name}.delay", "-", "+").last(2).map { |message| message[1] }
 
         expect(messages).to eq([
