@@ -9,6 +9,7 @@ jobs:
         redis:
           - redis:5.0
           - redis:6.0
+          - redis:7.0
     services:
       redis:
         image: ${{ matrix.redis }}
