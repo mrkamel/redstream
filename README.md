@@ -231,6 +231,33 @@ array of records to `Redstream::Producer#bulk`, like shown above. If you pass
 an `ActiveRecord::Relation`, the `#bulk` method will convert it to an array,
 i.e. load the whole result set into memory.
 
+## Sharding
+
+When you want to attach multiple consumers to a single stream, you maybe want
+to add sharding. This can be accomplished by specifying a dynamic stream name
+where you compute the shard key by hashing the primary key.
+
+```ruby
+class Product < ActiveRecord::Base
+  include Redstream::Model
+
+  NUM_SHARDS = 4
+
+  def self.redstream_name(shard)
+    "products-#{shard}"
+  end
+
+  def redstream_name
+    self.class.redstream_name(Digest::SHA1.hexdigest(id.to_s)[0, 4].to_i(16) % NUM_SHARDS)
+  end
+end
+```
+
+The sharding via hashing the primary key is neccessary, because we want each
+change of a specific object to end up in the same stream. Otherwise the order
+of changes for a specific object gets mixed up. Subsequently, you can add
+consumers, etc for each individual stream name.
+
 ## Namespacing
 
 In case you are using a shared redis, where multiple appications read/write

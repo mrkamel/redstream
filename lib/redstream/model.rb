@@ -58,5 +58,28 @@ module Redstream
     def redstream_payload
       { id: id }
     end
+
+    # Override to customize the stream name. By default, the stream name
+    # is determined by the class name. If you override the instance method,
+    # please also override the class method.
+    #
+    # @example Sharding
+    #   class Product
+    #     include Redstream::Model
+    #
+    #     NUM_SHARDS = 4
+    #
+    #     def redstream_name
+    #       self.class.redstream_name(Digest::SHA1.hexdigest(id.to_s)[0, 4].to_i(16) % NUM_SHARDS)
+    #     end
+    #
+    #     def self.redstream_name(shard)
+    #       "products-#{shard}
+    #     end
+    #   end
+
+    def redstream_name
+      self.class.redstream_name
+    end
   end
 end

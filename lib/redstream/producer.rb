@@ -31,7 +31,6 @@ module Redstream
 
     def initialize(wait: false)
       @wait = wait
-      @stream_name_cache = {}
 
       super()
     end
@@ -138,9 +137,7 @@ module Redstream
     private
 
     def stream_name(object)
-      synchronize do
-        @stream_name_cache[object.class] ||= object.class.redstream_name
-      end
+      object.redstream_name
     end
   end
 end
