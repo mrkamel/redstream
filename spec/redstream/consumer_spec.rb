@@ -86,5 +86,44 @@ RSpec.describe Redstream::Consumer do
 
       expect(redis.get(Redstream.offset_key_name(stream_name: "products", consumer_name: "consumer"))).to eq(all_messages.last[0])
     end
+
+    it "does not starve" do
+      product = create(:product)
+      stopped = false
+      results = Concurrent::Array.new
+
+      thread1 = Thread.new do
+        until stopped
+          Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once do
+            results.push("thread1")
+
+            product.touch
+
+            sleep 0.1
+          end
+        end
+      end
+
+      thread2 = Thread.new do
+        until stopped
+          Redstream::Consumer.new(name: "consumer", stream_name: "products").run_once do
+            results.push("thread2")
+
+            product.touch
+
+            sleep 0.1
+          end
+        end
+      end
+
+      sleep 6
+
+      stopped = true
+      [thread1, thread2].each(&:join)
+
+      expect(results.size).to be > 10
+      expect(results.count("thread1").to_f / results.size).to be > 0.2
+      expect(results.count("thread2").to_f / results.size).to be > 0.2
+    end
   end
 end

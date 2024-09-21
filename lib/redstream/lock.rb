@@ -21,6 +21,21 @@ module Redstream
   #   end
 
   class Lock
+    class Signal
+      def initialize
+        @mutex = Mutex.new
+        @condition_variable = ConditionVariable.new
+      end
+
+      def wait(timeout)
+        @mutex.synchronize { @condition_variable.wait(@mutex, timeout) }
+      end
+
+      def signal
+        @condition_variable.signal
+      end
+    end
+
     def initialize(name:)
       @name = name
       @id = SecureRandom.hex
@@ -38,27 +53,31 @@ module Redstream
     end
 
     def wait(timeout)
-      Redstream.connection_pool.with(&:dup).brpop("#{Redstream.lock_key_name(@name)}.notify", timeout: timeout)
+      @wait_redis ||= Redstream.connection_pool.with(&:dup)
+      @wait_redis.brpop("#{Redstream.lock_key_name(@name)}.notify", timeout: timeout)
     end
 
     private
 
     def keep_lock(&block)
       stopped = false
+      signal = Signal.new
 
-      Thread.new do
+      thread = Thread.new do
         until stopped
           Redstream.connection_pool.with do |redis|
             redis.expire(Redstream.lock_key_name(@name), 5)
           end
 
-          sleep 3
+          signal.wait(3)
         end
       end
 
       block.call
     ensure
       stopped = true
+      signal&.signal
+      thread&.join
     end
 
     def get_lock
