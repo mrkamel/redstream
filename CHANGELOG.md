@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v0.6.0
+* Allow sharding records into multiple streams
+
 ## v0.5.0
 * No longer delete delay messages
 
