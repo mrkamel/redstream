@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v0.6.1
+* Use Redstream::Lock#wait in Redstream::Trimmer
+
 ## v0.6.0
 * Allow sharding records into multiple streams
 
