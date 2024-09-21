@@ -76,6 +76,16 @@ RSpec.describe Redstream::Lock do
       expect(redis.llen("#{Redstream.lock_key_name("lock")}.notify")).to eq(1)
     end
 
+    it "does not release the lock when the lock is already taken again" do
+      lock = Redstream::Lock.new(name: "lock")
+
+      lock.acquire do
+        redis.set(Redstream.lock_key_name("lock"), "other")
+      end
+
+      expect(redis.get(Redstream.lock_key_name("lock"))).to eq("other")
+    end
+
     it "acquires the lock as soon as it gets released" do
       time = nil
 

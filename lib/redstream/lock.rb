@@ -108,7 +108,7 @@ module Redstream
       @release_lock_script = <<~SCRIPT
         local lock_key_name, id = ARGV[1], ARGV[2]
 
-        local cur = redis.call('del', lock_key_name)
+        local cur = redis.call('get', lock_key_name)
 
         if cur and cur == id then
           redis.call('del', lock_key_name)
