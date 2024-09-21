@@ -71,7 +71,7 @@ module Redstream
         Redstream.connection_pool.with do |redis|
           redis.pipelined do |pipeline|
             slice.each do |object|
-              pipeline.xadd(Redstream.stream_key_name("#{stream_name(object)}.delay"), { payload: JSON.dump(object.redstream_payload) })
+              pipeline.xadd(Redstream.stream_key_name("#{object.redstream_name}.delay"), { payload: JSON.dump(object.redstream_payload) })
             end
           end
         end
@@ -95,7 +95,7 @@ module Redstream
         Redstream.connection_pool.with do |redis|
           redis.pipelined do |pipeline|
             slice.each do |object|
-              pipeline.xadd(Redstream.stream_key_name(stream_name(object)), { payload: JSON.dump(object.redstream_payload) })
+              pipeline.xadd(Redstream.stream_key_name(object.redstream_name), { payload: JSON.dump(object.redstream_payload) })
             end
           end
         end
@@ -114,7 +114,7 @@ module Redstream
 
     def delay(object)
       Redstream.connection_pool.with do |redis|
-        res = redis.xadd(Redstream.stream_key_name("#{stream_name(object)}.delay"), { payload: JSON.dump(object.redstream_payload) })
+        res = redis.xadd(Redstream.stream_key_name("#{object.redstream_name}.delay"), { payload: JSON.dump(object.redstream_payload) })
         redis.wait(@wait, 0) if @wait
         res
       end
@@ -128,16 +128,10 @@ module Redstream
 
     def queue(object)
       Redstream.connection_pool.with do |redis|
-        redis.xadd(Redstream.stream_key_name(stream_name(object)), { payload: JSON.dump(object.redstream_payload) })
+        redis.xadd(Redstream.stream_key_name(object.redstream_name), { payload: JSON.dump(object.redstream_payload) })
       end
 
       true
-    end
-
-    private
-
-    def stream_name(object)
-      object.redstream_name
     end
   end
 end
