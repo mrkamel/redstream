@@ -23,7 +23,7 @@ RSpec.describe Redstream::Trimmer do
 
     it "sleeps for the specified time if there's nothing to trim" do
       trimmer = Redstream::Trimmer.new(interval: 1, stream_name: "default", consumer_names: ["unknown_consumer"])
-      trimmer.expects(:sleep).with(1).returns(true)
+      allow(trimmer).to receive(:sleep).with(1).and_return(true)
       trimmer.run_once
     end
   end
