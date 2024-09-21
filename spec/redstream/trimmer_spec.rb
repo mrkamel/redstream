@@ -26,5 +26,17 @@ RSpec.describe Redstream::Trimmer do
       allow(trimmer).to receive(:sleep).with(1).and_return(true)
       trimmer.run_once
     end
+
+    it "allows to run multiple trimmers" do
+      thread1 = Thread.new do
+        Redstream::Trimmer.new(interval: 1, stream_name: "default", consumer_names: ["unknown_consumer"]).run_once
+      end
+
+      thread2 = Thread.new do
+        Redstream::Trimmer.new(interval: 1, stream_name: "default", consumer_names: ["unknown_consumer"]).run_once
+      end
+
+      expect { [thread1, thread2].each(&:join) }.not_to raise_error
+    end
   end
 end
