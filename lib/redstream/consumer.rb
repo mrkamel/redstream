@@ -90,7 +90,7 @@ module Redstream
         commit offset
       end
 
-      sleep(5) unless got_lock
+      @lock.wait(5) unless got_lock
     rescue StandardError => e
       @logger.error e
 

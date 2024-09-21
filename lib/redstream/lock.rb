@@ -28,19 +28,29 @@ module Redstream
 
     def acquire(&block)
       got_lock = get_lock
-      keep_lock(&block) if got_lock
+
+      if got_lock
+        keep_lock(&block)
+        release_lock
+      end
+
       got_lock
+    end
+
+    def wait(timeout)
+      Redstream.connection_pool.with(&:dup).brpop("#{Redstream.lock_key_name(@name)}.notify", timeout: timeout)
     end
 
     private
 
     def keep_lock(&block)
-      stop = false
-      mutex = Mutex.new
+      stopped = false
 
       Thread.new do
-        until mutex.synchronize { stop }
-          Redstream.connection_pool.with { |redis| redis.expire(Redstream.lock_key_name(@name), 5) }
+        until stopped
+          Redstream.connection_pool.with do |redis|
+            redis.expire(Redstream.lock_key_name(@name), 5)
+          end
 
           sleep 3
         end
@@ -48,13 +58,11 @@ module Redstream
 
       block.call
     ensure
-      mutex.synchronize do
-        stop = true
-      end
+      stopped = true
     end
 
     def get_lock
-      @get_lock_script = <<~GET_LOCK_SCRIPT
+      @get_lock_script = <<~SCRIPT
         local lock_key_name, id = ARGV[1], ARGV[2]
 
         local cur = redis.call('get', lock_key_name)
@@ -70,9 +78,30 @@ module Redstream
         end
 
         return false
-      GET_LOCK_SCRIPT
+      SCRIPT
 
-      Redstream.connection_pool.with { |redis| redis.eval(@get_lock_script, argv: [Redstream.lock_key_name(@name), @id]) }
+      Redstream.connection_pool.with do |redis|
+        redis.eval(@get_lock_script, argv: [Redstream.lock_key_name(@name), @id])
+      end
+    end
+
+    def release_lock
+      @release_lock_script = <<~SCRIPT
+        local lock_key_name, id = ARGV[1], ARGV[2]
+
+        local cur = redis.call('del', lock_key_name)
+
+        if cur and cur == id then
+          redis.call('del', lock_key_name)
+        end
+
+        redis.call('del', lock_key_name .. '.notify')
+        redis.call('rpush', lock_key_name .. '.notify', '1')
+      SCRIPT
+
+      Redstream.connection_pool.with do |redis|
+        redis.eval(@release_lock_script, argv: [Redstream.lock_key_name(@name), @id])
+      end
     end
   end
 end
